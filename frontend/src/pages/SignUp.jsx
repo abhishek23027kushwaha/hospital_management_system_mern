@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User, Phone, Calendar, ChevronDown } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../redux/user.slice.js';
 import axios from 'axios';
 
 const API_BASE = 'http://localhost:8000/api';
@@ -27,6 +29,7 @@ const InputField = ({ icon: Icon, label, children }) => (
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', gender: '', age: '' });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,8 +48,7 @@ const SignUp = () => {
     try {
       const { data } = await axios.post(`${API_BASE}/auth/register`, form, { withCredentials: true });
       if (data.success) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('token', data.token);
+        dispatch(setUser({ user: data.user, token: data.token }));
         navigate('/');
       }
     } catch (err) {

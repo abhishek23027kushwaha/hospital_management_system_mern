@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../redux/user.slice.js';
 import axios from 'axios';
 
 const API_BASE = 'http://localhost:8000/api';
@@ -18,6 +20,7 @@ const Blob = ({ style, duration, delay }) => (
 
 const Login = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,8 +38,7 @@ const Login = () => {
     try {
       const { data } = await axios.post(`${API_BASE}/auth/login`, form, { withCredentials: true });
       if (data.success) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('token', data.token);
+        dispatch(setUser({ user: data.user, token: data.token }));
         navigate('/');
       }
     } catch (err) {

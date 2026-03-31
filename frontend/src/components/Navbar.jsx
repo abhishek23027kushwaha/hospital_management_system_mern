@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Key, Hospital, LogOut, Menu, X } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { clearUser, selectUser, selectIsAuth } from "../redux/user.slice.js";
 
 const navItems = [
   { name: "Home", path: "/" },
@@ -14,24 +16,16 @@ const navItems = [
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector(selectUser);
   const [activePath, setActivePath] = useState(location.pathname);
-  const [user, setUser] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) {
-      try { setUser(JSON.parse(stored)); } catch { setUser(null); }
-    } else {
-      setUser(null);
-    }
-  }, [location.pathname]);
-
-  useEffect(() => {
     setActivePath(location.pathname);
-    setMobileOpen(false); // close mobile menu on route change
+    setMobileOpen(false);
   }, [location.pathname]);
 
   // Close dropdown on outside click
@@ -45,9 +39,7 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    setUser(null);
+    dispatch(clearUser());
     setDropdownOpen(false);
     setMobileOpen(false);
     navigate("/login");
