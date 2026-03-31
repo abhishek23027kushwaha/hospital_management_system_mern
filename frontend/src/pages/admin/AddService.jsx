@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { ImageIcon, Plus, CalendarCheck, CheckCircle2 } from 'lucide-react';
+import { ImageIcon, Plus, CalendarCheck, CheckCircle2, Loader2 } from 'lucide-react';
+import axios from 'axios';
+
+const API_BASE = 'http://localhost:8000/api';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const HOURS   = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -24,6 +27,7 @@ export default function AddService() {
     minute: '00',
     ampm:   'AM',
   });
+  const [loading, setLoading] = useState(false);
 
   /* ── handlers ── */
   const handleImg = e => {
@@ -44,10 +48,36 @@ export default function AddService() {
     setAvailable('Available'); setAbout(''); setInstructions(['']); setSlots([]);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!image) return alert('Please upload a service image');
-    if (!name)  return alert('Please enter a service name');
-    alert('Service saved! (Connect with backend API)');
+    if (!name || !price)  return alert('Please enter service name and price');
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('price', price);
+      formData.append('available', available);
+      formData.append('about', about);
+      formData.append('image', image);
+      formData.append('instructions', JSON.stringify(instructions));
+      formData.append('slots', JSON.stringify(slots));
+
+      const { data } = await axios.post(`${API_BASE}/services`, formData, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (data.success) {
+        alert('Service saved successfully!');
+        reset();
+      }
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to save service');
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ── shared input style ── */
@@ -77,12 +107,13 @@ export default function AddService() {
               padding: '9px 22px', borderRadius: 30, border: '1.5px solid #d1d5db',
               background: '#fff', color: '#374151', fontWeight: 600, fontSize: 13, cursor: 'pointer',
             }}>Reset</button>
-            <button onClick={handleSubmit} style={{
+            <button onClick={handleSubmit} disabled={loading} style={{
               padding: '9px 22px', borderRadius: 30, border: 'none',
-              background: '#0d9488', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6,
+              background: '#0d9488', color: '#fff', fontWeight: 700, fontSize: 13, cursor: loading ? 'default' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6, opacity: loading ? 0.7 : 1,
             }}>
-              <CheckCircle2 size={15} /> Save Service
+              {loading ? <Loader2 className="animate-spin" size={15} /> : <CheckCircle2 size={15} />}
+              {loading ? 'Saving...' : 'Save Service'}
             </button>
           </div>
         </div>

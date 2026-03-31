@@ -1,29 +1,75 @@
 import Service from "../models/service.model.js";
 import ServiceAppointment from "../models/serviceAppointment.model.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 // ── POST /api/services (admin) ────────────────────────────────────────────
 export const addService = async (req, res) => {
   try {
-    const { name, price, about, instructions, image, available, slots } = req.body;
+    const { name, price, about, instructions, available, slots } = req.body;
 
     if (!name || !price) {
       return res.status(400).json({ success: false, message: "Service name and price are required" });
     }
 
+    // Upload image to Cloudinary (if provided)
+    let imageUrl = "";
+    if (req.file) {
+      try {
+        imageUrl = await uploadToCloudinary(req.file.buffer, "services");
+      } catch (uploadErr) {
+        console.error("Cloudinary upload error:", uploadErr);
+        return res.status(500).json({ success: false, message: "Failed to upload image" });
+      }
+    }
+
+    let parsedInstructions = [];
+    let parsedSlots = [];
+
+    try {
+      if (instructions) {
+        const rawInstructions = typeof instructions === 'string' ? JSON.parse(instructions) : instructions;
+        if (Array.isArray(rawInstructions)) {
+          parsedInstructions = rawInstructions.filter(Boolean);
+        }
+      }
+      if (slots) {
+        const rawSlots = typeof slots === 'string' ? JSON.parse(slots) : slots;
+        if (Array.isArray(rawSlots)) {
+          parsedSlots = rawSlots.map(s => {
+            if (typeof s === 'string' && s.includes(',')) {
+              const [date, time] = s.split(', ');
+              return { date: date.trim(), time: time.trim(), isBooked: false };
+            }
+            if (typeof s === 'object' && s.date && s.time) {
+               return { date: s.date, time: s.time, isBooked: !!s.isBooked };
+            }
+            return null;
+          }).filter(Boolean);
+        }
+      }
+    } catch (parseErr) {
+      console.error("Data parse error in addService:", parseErr);
+      return res.status(400).json({ success: false, message: "Invalid data format for instructions or slots" });
+    }
+
     const service = await Service.create({
       name:         name.trim(),
-      price:        Number(price),
+      price:        Number(price) || 0,
       about:        about || "",
-      instructions: Array.isArray(instructions) ? instructions.filter(Boolean) : [],
-      image:        image || "",
-      available:    available !== undefined ? Boolean(available) : true,
-      slots:        Array.isArray(slots) ? slots : [],
+      instructions: parsedInstructions,
+      image:        imageUrl,
+      available:    available !== undefined ? (available === "true" || available === true || available === "Available") : true,
+      slots:        parsedSlots,
     });
 
     return res.status(201).json({ success: true, message: "Service added successfully", service });
   } catch (err) {
     console.error("addService error:", err);
-    return res.status(500).json({ success: false, message: "Server error" });
+    // Specifically handle Mongoose validation errors
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
