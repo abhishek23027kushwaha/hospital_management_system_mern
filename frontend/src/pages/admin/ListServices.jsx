@@ -1,17 +1,44 @@
-import { useState } from 'react';
-import { Trash2, Edit2, List } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Trash2, Edit2, List, Loader2 } from 'lucide-react';
+import axios from 'axios';
 
-const SAMPLE = [
-  { id: 1, name: 'Blood Test',   category: 'Lab',       price: 300, duration: 20, active: true },
-  { id: 2, name: 'X-Ray',        category: 'Radiology', price: 500, duration: 30, active: true },
-  { id: 3, name: 'ECG',          category: 'Cardiology', price: 400, duration: 25, active: false },
-  { id: 4, name: 'MRI Scan',     category: 'Radiology', price: 3000, duration: 60, active: true },
-  { id: 5, name: 'Dental Check', category: 'Dental',    price: 600, duration: 40, active: true },
-];
+const API_BASE = 'http://localhost:8000/api';
 
 export default function ListServices() {
-  const [services, setServices] = useState(SAMPLE);
-  const remove = id => { if (window.confirm('Delete this service?')) setServices(s => s.filter(x => x.id !== id)); };
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${API_BASE}/services`, { withCredentials: true });
+      if (data.success) {
+        setServices(data.services);
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to load services');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const remove = async (id) => {
+    if (window.confirm('Delete this service?')) {
+      try {
+        const { data } = await axios.delete(`${API_BASE}/services/${id}`, { withCredentials: true });
+        if (data.success) {
+          setServices(prev => prev.filter(x => x._id !== id));
+        }
+      } catch (err) {
+        alert(err?.response?.data?.message || 'Failed to delete service');
+      }
+    }
+  };
 
   return (
     <div style={{ padding: '28px 32px', fontFamily: "'Inter','Segoe UI',sans-serif" }}>
@@ -30,22 +57,33 @@ export default function ListServices() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#f9fafb' }}>
-              {['#', 'Service Name', 'Category', 'Price', 'Duration', 'Status', 'Actions'].map(h => (
+              {['#', 'Service Name', 'About', 'Price', 'Slots', 'Status', 'Actions'].map(h => (
                 <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, color: '#6b7280', fontWeight: 600, borderBottom: '1px solid #f3f4f6' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {services.map((s, i) => (
-              <tr key={s.id} style={{ borderTop: '1px solid #f3f4f6' }}>
+            {loading ? (
+              <tr><td colSpan={7} style={{ padding: 60, textAlign: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                  <Loader2 className="animate-spin" size={24} color="#16a34a" />
+                  <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 500 }}>Fetching services...</span>
+                </div>
+              </td></tr>
+            ) : error ? (
+              <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#dc2626', fontSize: 14 }}>{error}</td></tr>
+            ) : services.length === 0 ? (
+              <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>No services registered</td></tr>
+            ) : services.map((s, i) => (
+              <tr key={s._id} style={{ borderTop: '1px solid #f3f4f6' }}>
                 <td style={{ padding: '14px 16px', fontSize: 13, color: '#9ca3af' }}>{i + 1}</td>
                 <td style={{ padding: '14px 16px', fontSize: 14, fontWeight: 600, color: '#111827' }}>{s.name}</td>
-                <td style={{ padding: '14px 16px', fontSize: 13, color: '#374151' }}>{s.category}</td>
+                <td style={{ padding: '14px 16px', fontSize: 13, color: '#374151' }}>{s.about || 'General'}</td>
                 <td style={{ padding: '14px 16px', fontSize: 13, fontWeight: 600, color: '#111827' }}>₹{s.price}</td>
-                <td style={{ padding: '14px 16px', fontSize: 13, color: '#374151' }}>{s.duration} min</td>
+                <td style={{ padding: '14px 16px', fontSize: 13, color: '#374151' }}>{s.slots?.length || 0} slots</td>
                 <td style={{ padding: '14px 16px' }}>
-                  <span style={{ background: s.active ? '#d1fae5' : '#fee2e2', color: s.active ? '#16a34a' : '#dc2626', borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 700 }}>
-                    {s.active ? 'Active' : 'Inactive'}
+                  <span style={{ background: s.available ? '#d1fae5' : '#fee2e2', color: s.available ? '#16a34a' : '#dc2626', borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 700 }}>
+                    {s.available ? 'Available' : 'Unavailable'}
                   </span>
                 </td>
                 <td style={{ padding: '14px 16px' }}>
@@ -53,7 +91,7 @@ export default function ListServices() {
                     <button style={{ background: '#eff6ff', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#2563eb', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600 }}>
                       <Edit2 size={13} /> Edit
                     </button>
-                    <button onClick={() => remove(s.id)} style={{ background: '#fef2f2', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600 }}>
+                    <button onClick={() => remove(s._id)} style={{ background: '#fef2f2', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600 }}>
                       <Trash2 size={13} /> Delete
                     </button>
                   </div>
