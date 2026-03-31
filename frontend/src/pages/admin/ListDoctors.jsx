@@ -1,24 +1,49 @@
-import { useState } from 'react';
-import { Search, Trash2, Edit2, Users } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Trash2, Edit2, Users, Loader2 } from 'lucide-react';
+import axios from 'axios';
 
-const SAMPLE = [
-  { id: 1, name: 'Dr. Aisha Patel',    specialization: 'Cardiologist',   fee: 1200, experience: 8,  available: true },
-  { id: 2, name: 'Dr. Rahul Verma',    specialization: 'Neurologist',    fee: 1500, experience: 12, available: true },
-  { id: 3, name: 'Dr. Priya Sharma',   specialization: 'Dermatologist',  fee: 800,  experience: 5,  available: false },
-  { id: 4, name: 'Dr. Suresh Kumar',   specialization: 'Orthopedic',     fee: 1000, experience: 10, available: true },
-];
+const API_BASE = 'http://localhost:8000/api';
 
 export default function ListDoctors() {
   const [search, setSearch] = useState('');
-  const [doctors, setDoctors] = useState(SAMPLE);
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchDoctors = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${API_BASE}/admin/doctors`, { withCredentials: true });
+      if (data.success) {
+        setDoctors(data.doctors);
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to load doctors');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
 
   const filtered = doctors.filter(d =>
     d.name.toLowerCase().includes(search.toLowerCase()) ||
     d.specialization.toLowerCase().includes(search.toLowerCase())
   );
 
-  const remove = (id) => {
-    if (window.confirm('Remove this doctor?')) setDoctors(d => d.filter(x => x.id !== id));
+  const remove = async (id) => {
+    if (window.confirm('Remove this doctor?')) {
+      try {
+        const { data } = await axios.delete(`${API_BASE}/admin/doctors/${id}`, { withCredentials: true });
+        if (data.success) {
+          setDoctors(prev => prev.filter(x => x._id !== id));
+        }
+      } catch (err) {
+        alert(err?.response?.data?.message || 'Failed to delete doctor');
+      }
+    }
   };
 
   return (
@@ -55,10 +80,19 @@ export default function ListDoctors() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {loading ? (
+              <tr><td colSpan={7} style={{ padding: 60, textAlign: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                  <Loader2 className="animate-spin" size={24} color="#16a34a" />
+                  <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 500 }}>Initializing system...</span>
+                </div>
+              </td></tr>
+            ) : error ? (
+              <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#dc2626', fontSize: 14 }}>{error}</td></tr>
+            ) : filtered.length === 0 ? (
               <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>No doctors found</td></tr>
             ) : filtered.map((doc, i) => (
-              <tr key={doc.id} style={{ borderTop: '1px solid #f3f4f6', transition: 'background 0.15s' }}
+              <tr key={doc._id} style={{ borderTop: '1px solid #f3f4f6', transition: 'background 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
@@ -84,7 +118,7 @@ export default function ListDoctors() {
                     <button style={{ background: '#eff6ff', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#2563eb', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600 }}>
                       <Edit2 size={13} /> Edit
                     </button>
-                    <button onClick={() => remove(doc.id)} style={{ background: '#fef2f2', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600 }}>
+                    <button onClick={() => remove(doc._id)} style={{ background: '#fef2f2', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600 }}>
                       <Trash2 size={13} /> Delete
                     </button>
                   </div>
