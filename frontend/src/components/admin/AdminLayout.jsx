@@ -1,4 +1,6 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, Navigate, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectUser, clearUser } from '../../redux/user.slice';
 import {
   LayoutDashboard, UserPlus, Users, CalendarCheck,
   LayoutGrid, PlusSquare, List, CalendarRange, Stethoscope, LogOut
@@ -16,6 +18,20 @@ const navLinks = [
 ];
 
 const AdminLayout = () => {
+  const user = useSelector(selectUser);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  // ── Protection: Only admin can access ──
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  const handleLogout = () => {
+    dispatch(clearUser());
+    navigate('/admin/login');
+  };
+
   return (
     <div style={{ minHeight: '100vh', background: '#f0fdf4', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
       {/* ── Fixed Top Navbar ── */}
@@ -39,7 +55,7 @@ const AdminLayout = () => {
           </div>
           <div style={{ lineHeight: 1.2 }}>
             <div style={{ color: '#16a34a', fontWeight: 900, fontSize: 15 }}>MediCare</div>
-            <div style={{ color: '#9ca3af', fontSize: 10, fontWeight: 500 }}>Healthcare Solutions</div>
+            <div style={{ color: '#9ca3af', fontSize: 10, fontWeight: 500 }}>Admin Panel</div>
           </div>
         </div>
 
@@ -74,14 +90,16 @@ const AdminLayout = () => {
         </nav>
 
         {/* Sign Out */}
-        <button style={{
-          background: '#f59e0b', color: '#fff', border: 'none',
-          borderRadius: 50, padding: '9px 22px',
-          fontWeight: 700, fontSize: 13, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 6,
-          boxShadow: '0 2px 8px rgba(245,158,11,0.3)',
-          transition: 'all 0.2s',
-        }}
+        <button 
+          onClick={handleLogout}
+          style={{
+            background: '#f59e0b', color: '#fff', border: 'none',
+            borderRadius: 50, padding: '9px 22px',
+            fontWeight: 700, fontSize: 13, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+            boxShadow: '0 2px 8px rgba(245,158,11,0.3)',
+            transition: 'all 0.2s',
+          }}
           onMouseEnter={e => e.currentTarget.style.background = '#d97706'}
           onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}
         >

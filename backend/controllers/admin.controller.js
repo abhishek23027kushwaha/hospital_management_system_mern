@@ -4,6 +4,8 @@ import User from "../models/user.model.js";
 import Doctor from "../models/doctor.model.js";
 import DoctorAppointment from "../models/doctorAppointment.model.js";
 import ServiceAppointment from "../models/serviceAppointment.model.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
+
 
 // ── helpers ───────────────────────────────────────────────────────────────
 const generateToken = (id, role) =>
@@ -24,25 +26,21 @@ export const adminLogin = async (req, res) => {
       return res.status(400).json({ success: false, message: "Email and password required" });
     }
 
-    const admin = await User.findOne({ email: email.toLowerCase(), role: "admin" });
-    if (!admin) {
-      return res.status(401).json({ success: false, message: "Invalid admin credentials" });
+    const ADMIN_EMAIL = "adminmedicare@gmail.com";
+    const ADMIN_PASSWORD = "admin@123";
+
+    if (email.toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, { expiresIn: "7d" });
+      res.cookie("token", token, cookieOpts);
+      return res.status(200).json({
+        success: true,
+        message: "Admin logged in",
+        admin: { email: ADMIN_EMAIL, role: "admin", name: "System Admin" },
+        token,
+      });
     }
 
-    const match = await bcrypt.compare(password, admin.password);
-    if (!match) {
-      return res.status(401).json({ success: false, message: "Invalid admin credentials" });
-    }
-
-    const token = generateToken(admin._id, "admin");
-    res.cookie("token", token, cookieOpts);
-
-    return res.status(200).json({
-      success: true,
-      message: "Admin logged in",
-      admin: { _id: admin._id, name: admin.name, email: admin.email, role: admin.role },
-      token,
-    });
+    return res.status(401).json({ success: false, message: "Invalid admin credentials" });
   } catch (err) {
     console.error("adminLogin error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
@@ -92,14 +90,11 @@ export const getDashboardStats = async (req, res) => {
 // ── POST /api/admin/doctors ───────────────────────────────────────────────
 export const addDoctor = async (req, res) => {
   try {
-    const { name, email, password, phone, specialization, experience, fee, about, available, image } = req.body;
+    const { name, email, password, phone, specialization, experience, fee, about, available } = req.body;
 
     // Validation
-    if (!name || !email || !password || !specialization || !fee) {
-      return res.status(400).json({
-        success: false,
-        message: "Name, email, password, specialization, and fee are required",
-      });
+    if (!name || !email || !password || !specialization || !fee || !experience || !about) {
+      return res.status(400).json({ success: false, message: "Something is missing" });
     }
     if (password.length < 6) {
       return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
@@ -108,6 +103,12 @@ export const addDoctor = async (req, res) => {
     const existing = await Doctor.findOne({ email: email.toLowerCase() });
     if (existing) {
       return res.status(409).json({ success: false, message: "Doctor with this email already exists" });
+    }
+
+    // Upload image to Cloudinary (if provided)
+    let imageUrl = "";
+    if (req.file) {
+      imageUrl = await uploadToCloudinary(req.file.buffer, "doctors");
     }
 
     const hashed = await bcrypt.hash(password, 12);
@@ -120,8 +121,8 @@ export const addDoctor = async (req, res) => {
       experience: Number(experience) || 0,
       fee: Number(fee),
       about: about || "",
-      available: available !== undefined ? Boolean(available) : true,
-      image: image || "",
+      available: available !== undefined ? available === "true" || available === true : true,
+      image: imageUrl,
     });
 
     return res.status(201).json({
@@ -134,6 +135,7 @@ export const addDoctor = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 // ── GET /api/admin/doctors ────────────────────────────────────────────────
 export const listDoctors = async (req, res) => {

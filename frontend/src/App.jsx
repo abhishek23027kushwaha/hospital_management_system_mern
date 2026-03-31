@@ -26,6 +26,7 @@ import ServiceDashboard from "./pages/admin/ServiceDashboard"
 import AddService from "./pages/admin/AddService"
 import ListServices from "./pages/admin/ListServices"
 import ServiceAppointments from "./pages/admin/ServiceAppointments"
+import AdminLogin from "./pages/admin/AdminLogin"
 
 /* ── User layout: Navbar + Footer ── */
 const UserLayout = () => (
@@ -67,6 +68,7 @@ function App() {
       </Route>
 
       {/* ── Admin Panel Routes ── */}
+      <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
         <Route path="add-doctor" element={<AddDoctor />} />

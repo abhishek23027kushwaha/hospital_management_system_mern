@@ -5,11 +5,11 @@ import cookieParser from "cookie-parser";
 import connectDB from "./db.js";
 
 // ── Routes ────────────────────────────────────────────────────────────────
-import authRoutes               from "./routes/auth.routes.js";
-import adminRoutes              from "./routes/admin.routes.js";
-import doctorRoutes             from "./routes/doctor.routes.js";
-import appointmentRoutes        from "./routes/appointment.routes.js";
-import serviceRoutes            from "./routes/service.routes.js";
+import authRoutes  from "./routes/auth.routes.js";
+import adminRoutes  from "./routes/admin.routes.js";
+import doctorRoutes from "./routes/doctor.routes.js";
+import appointmentRoutes from "./routes/appointment.routes.js";
+import serviceRoutes from "./routes/service.routes.js";
 import serviceAppointmentRoutes from "./routes/serviceAppointment.routes.js";
 
 dotenv.config();
@@ -32,12 +32,12 @@ connectDB();
 app.get("/", (req, res) => res.json({ success: true, message: "MediCare API is running 🚀" }));
 
 // ── API Routes ────────────────────────────────────────────────────────────
-app.use("/api/auth",                 authRoutes);
-app.use("/api/admin",                adminRoutes);
-app.use("/api/doctor",               doctorRoutes);
-app.use("/api/appointments",         appointmentRoutes);
-app.use("/api/services",             serviceRoutes);
-app.use("/api/service-appointments", serviceAppointmentRoutes);
+app.use("/api/auth",   authRoutes);
+app.use("/api/admin",  adminRoutes);
+app.use("/api/doctor", doctorRoutes);
+app.use("/api/appointments",appointmentRoutes);
+app.use("/api/services", serviceRoutes);
+app.use("/api/service-appointments",serviceAppointmentRoutes);
 
 // ── 404 handler ───────────────────────────────────────────────────────────
 app.use((req, res) => {

@@ -12,6 +12,7 @@ import {
 } from "../controllers/admin.controller.js";
 import { protectRoute } from "../middlewares/auth.middleware.js";
 import { isAdmin } from "../middlewares/role.middleware.js";
+import { handleUpload, uploadImage } from "../utils/multer.js";
 
 const router = express.Router();
 
@@ -25,14 +26,15 @@ router.use(protectRoute, isAdmin);
 router.get("/dashboard", getDashboardStats);
 
 // Doctor management
-router.post  ("/doctors",      addDoctor);
+router.post  ("/doctors",      handleUpload(uploadImage), addDoctor);
 router.get   ("/doctors",      listDoctors);
-router.put   ("/doctors/:id",  updateDoctor);
-router.delete("/doctors/:id",  deleteDoctor);
+
+router.put   ("/doctors/:id",updateDoctor);
+router.delete("/doctors/:id",deleteDoctor);
 
 // Appointment management (type: doctor | service)
-router.get("/appointments",                       getAllAppointments);
-router.put("/appointments/:type/:id/status",      updateAppointmentStatus);
+router.get("/appointments", getAllAppointments);
+router.put("/appointments/:type/:id/status",updateAppointmentStatus);
 
 // User management
 router.get("/users", getAllUsers);
