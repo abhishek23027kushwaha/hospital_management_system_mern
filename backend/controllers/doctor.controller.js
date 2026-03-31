@@ -49,6 +49,7 @@ export const doctorLogin = async (req, res) => {
         image: doctor.image,
         available: doctor.available,
         phone: doctor.phone,
+        role: doctor.role || "doctor",
       },
       token,
     });

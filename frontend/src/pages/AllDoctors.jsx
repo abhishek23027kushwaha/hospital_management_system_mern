@@ -1,27 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X } from 'lucide-react';
+import axios from 'axios';
 import DoctorCard from '../components/DoctorCard';
-import doctor_img from '../assets/doctor_main.png';
 
-const ALL_DOCTORS = [
-  { name: "Dr. David Kim", speciality: "Oncologist", experience: "7 years", image: doctor_img },
-  { name: "Dr. Emily Rodriguez", speciality: "Pediatrician", experience: "8 years", image: doctor_img },
-  { name: "Dr. Kabir Malhotra", speciality: "Nephrologist", experience: "7 years", image: doctor_img },
-  { name: "Dr. Rahul Sharma", speciality: "Cardiologist", experience: "10 years", image: doctor_img },
-  { name: "Dr. James Wilson", speciality: "Orthopedic Surgeon", experience: "12 years", image: doctor_img },
-  { name: "Dr. Sarah Jenkins", speciality: "Dermatologist", experience: "6 years", image: doctor_img },
-  { name: "Dr. Michael Chen", speciality: "Neurologist", experience: "9 years", image: doctor_img },
-  { name: "Dr. Lisa Wang", speciality: "Gastroenterologist", experience: "7 years", image: doctor_img },
-  { name: "Dr. Ananya Bose", speciality: "Gynecologist", experience: "9 years", image: doctor_img },
-  { name: "Dr. Omar Khan", speciality: "Pulmonologist", experience: "11 years", image: doctor_img },
-  { name: "Dr. Priya Menon", speciality: "Endocrinologist", experience: "8 years", image: doctor_img },
-  { name: "Dr. Robert Davis", speciality: "Urologist", experience: "14 years", image: doctor_img },
-  { name: "Dr. Natasha Gupta", speciality: "Rheumatologist", experience: "7 years", image: doctor_img },
-  { name: "Dr. Carlos Reyes", speciality: "Psychiatrist", experience: "10 years", image: doctor_img },
-  { name: "Dr. Mei Zhang", speciality: "Ophthalmologist", experience: "6 years", image: doctor_img },
-  { name: "Dr. Arjun Nair", speciality: "ENT Specialist", experience: "8 years", image: doctor_img },
-];
+const API_BASE = 'http://localhost:8000/api';
 
 const SPECIALITIES = [
   'All', 'Cardiologist', 'Neurologist', 'Pediatrician', 'Dermatologist',
@@ -31,17 +14,45 @@ const SPECIALITIES = [
 ];
 
 const AllDoctors = () => {
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [query, setQuery] = useState('');
   const [activeSpeciality, setActiveSpeciality] = useState('All');
 
-  const filtered = ALL_DOCTORS.filter(doc => {
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const { data } = await axios.get(`${API_BASE}/doctor/all`);
+        if (data.success) {
+          setDoctors(data.doctors);
+        }
+      } catch (err) {
+        setError("Failed to load medical staff");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDoctors();
+  }, []);
+
+  const filtered = doctors.filter(doc => {
     const matchesSearch =
       doc.name.toLowerCase().includes(query.toLowerCase()) ||
-      doc.speciality.toLowerCase().includes(query.toLowerCase());
+      doc.specialization.toLowerCase().includes(query.toLowerCase());
     const matchesFilter =
-      activeSpeciality === 'All' || doc.speciality === activeSpeciality;
+      activeSpeciality === 'All' || doc.specialization === activeSpeciality;
     return matchesSearch && matchesFilter;
   });
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50/50">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-green-500 border-t-transparent mb-4"></div>
+        <p className="text-gray-400 font-black uppercase tracking-widest text-sm">Searching Database...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -52,7 +63,7 @@ const AllDoctors = () => {
             Find Your <span className="text-[#22c55e]">Specialist</span>
           </h1>
           <p className="text-gray-500 text-lg">
-            Browse our team of {ALL_DOCTORS.length}+ verified healthcare professionals.
+            Browse our team of {doctors.length}+ verified healthcare professionals.
           </p>
 
           {/* Search Bar */}
@@ -63,7 +74,7 @@ const AllDoctors = () => {
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Search by name or speciality..."
-              className="w-full pl-11 pr-10 py-4 rounded-2xl bg-white border border-gray-200 shadow-lg shadow-gray-100 text-gray-700 text-sm outline-none focus:border-[#22c55e] focus:ring-2 focus:ring-[#22c55e]/20 transition-all"
+              className="w-full pl-11 pr-10 py-4 rounded-2xl bg-white border border-gray-200 shadow-lg shadow-gray-100 text-gray-700 text-sm outline-none focus:border-[#22c55e] focus:ring-2 focus:ring-[#22c55e]/20 transition-all font-medium"
             />
             {query && (
               <button
@@ -78,6 +89,12 @@ const AllDoctors = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-500 font-bold text-center">
+            {error}
+          </div>
+        )}
+
         {/* Speciality Filter Pills */}
         <div className="flex flex-wrap gap-2 mb-12">
           {SPECIALITIES.map(spec => (
@@ -110,7 +127,7 @@ const AllDoctors = () => {
             >
               {filtered.map((doc, index) => (
                 <motion.div
-                  key={doc.name}
+                  key={doc._id}
                   layout
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}

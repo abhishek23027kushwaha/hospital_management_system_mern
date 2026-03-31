@@ -11,6 +11,7 @@ import Appointments from "./pages/Appointments"
 import Contact from "./pages/Contact"
 import AllDoctors from "./pages/AllDoctors"
 import DoctorAdmin from "./pages/DoctorAdmin"
+import DoctorLogin from "./pages/DoctorLogin"
 
 // ── Shared Components ──
 import Navbar from "./components/Navbar"
@@ -52,6 +53,7 @@ function App() {
       {/* ── Auth Routes (no Navbar/Footer) ── */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/doctor/login" element={<DoctorLogin />} />
 
       {/* ── User Routes ── */}
       <Route element={<UserLayout />}>

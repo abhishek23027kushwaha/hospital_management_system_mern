@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Camera, 
   User, 
@@ -14,56 +14,165 @@ import {
   X,
   Clock,
   Calendar,
-  Save
+  Save,
+  Loader2
 } from 'lucide-react';
+import axios from 'axios';
 
+const API_BASE = 'http://localhost:8000/api';
 const fontStyle = { fontFamily: "'Inter', 'Segoe UI', sans-serif" };
 
 const EditProfile = () => {
-  const [isAvailable, setIsAvailable] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  
   const [profileData, setProfileData] = useState({
-    name: 'Dr. Emily Rodriguez',
-    specialization: 'Pediatrician',
-    experience: '8',
-    qualifications: 'MBBS, DCH',
-    location: 'Sunrise Pediatrics, Sector 12',
-    patients: '14k+',
-    success: '98',
-    rating: '4.7',
-    fee: '1500',
-    about: 'Child specialist focusing on growth, nutrition, and immunity.'
+    name: '',
+    specialization: 'General Physician',
+    experience: '0',
+    qualifications: '',
+    location: '',
+    patients: '0',
+    success: '100',
+    rating: '5',
+    fee: '0',
+    about: '',
+    image: '',
+    available: true,
   });
 
-  const [availability, setAvailability] = useState([
-    {
-      id: 1,
-      day: 'Sun, Feb 15',
-      date: '2026-02-15',
-      slots: ['10:00 AM', '11:00 AM']
-    },
-    {
-      id: 2,
-      day: 'Mon, Feb 16',
-      date: '2026-02-16',
-      slots: ['11:00 AM']
-    }
-  ]);
+  const [availability, setAvailability] = useState([]);
+  const [newDate, setNewDate] = useState('');
+  const [newTime, setNewTime] = useState('');
 
-  const removeSlot = (dateId, slotIndex) => {
-    setAvailability(prev => prev.map(item => {
-      if (item.id === dateId) {
-        return {
-          ...item,
-          slots: item.slots.filter((_, i) => i !== slotIndex)
-        };
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${API_BASE}/doctor/profile`, { withCredentials: true });
+      if (data.success) {
+        setProfileData({
+          ...data.doctor,
+          experience: String(data.doctor.experience || 0),
+          fee: String(data.doctor.fee || 0),
+          rating: String(data.doctor.rating || 5),
+        });
       }
-      return item;
-    }));
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to fetch profile');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeDate = (dateId) => {
-    setAvailability(prev => prev.filter(item => item.id !== dateId));
+  const fetchSlots = async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE}/doctor/slots`, { withCredentials: true });
+      if (data.success) {
+        // Group slots by date for display
+        const grouped = data.slots.reduce((acc, slot) => {
+          const date = slot.date;
+          if (!acc[date]) acc[date] = { date, slots: [] };
+          acc[date].slots.push(slot);
+          return acc;
+        }, {});
+        setAvailability(Object.values(grouped));
+      }
+    } catch (err) {
+      console.error('Failed to fetch slots', err);
+    }
   };
+
+  useEffect(() => {
+    fetchProfile();
+    fetchSlots();
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // We'll upload on save, but show preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileData(prev => ({ ...prev, imagePreview: reader.result, imageFile: file }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const formData = new FormData();
+      Object.keys(profileData).forEach(key => {
+        if (key === 'imageFile') {
+          formData.append('image', profileData[key]);
+        } else if (key !== 'imagePreview' && key !== 'image' && key !== 'slots') {
+          formData.append(key, profileData[key]);
+        }
+      });
+
+      const { data } = await axios.put(`${API_BASE}/doctor/profile`, formData, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (data.success) {
+        alert('Profile updated successfully!');
+        fetchProfile();
+      }
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addSlot = async () => {
+    if (!newDate || !newTime) return alert('Please select date and time');
+    try {
+      // Format date to "22 Mar 2026" or similar if needed, 
+      // but let's just send the raw date string for now
+      const dateObj = new Date(newDate);
+      const formattedDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      
+      const { data } = await axios.post(`${API_BASE}/doctor/slots`, 
+        { date: formattedDate, time: newTime }, 
+        { withCredentials: true }
+      );
+      if (data.success) {
+        setNewTime('');
+        fetchSlots();
+      }
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to add slot');
+    }
+  };
+
+  const removeSlot = async (slotId) => {
+    try {
+      const { data } = await axios.delete(`${API_BASE}/doctor/slots/${slotId}`, { withCredentials: true });
+      if (data.success) {
+        fetchSlots();
+      }
+    } catch (err) {
+      alert('Failed to remove slot');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4" style={fontStyle}>
+        <Loader2 className="animate-spin text-teal-600" size={40} />
+        <p className="text-gray-500 font-medium">Loading your profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 pb-20" style={fontStyle}>
@@ -82,22 +191,23 @@ const EditProfile = () => {
               <div className="relative group">
                 <div className="w-36 h-36 rounded-full border-4 border-white shadow-xl overflow-hidden bg-teal-50">
                   <img 
-                    src="https://images.unsplash.com/photo-1559839734-2b71f1536783?auto=format&fit=crop&q=80&w=200&h=200" 
+                    src={profileData.imagePreview || profileData.image || "https://via.placeholder.com/150"} 
                     alt="Doctor" 
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <button className="absolute bottom-1 right-1 p-2.5 bg-white rounded-full shadow-lg border border-teal-100 text-teal-600 hover:bg-teal-50 transition-all">
+                <label className="absolute bottom-1 right-1 p-2.5 bg-white rounded-full shadow-lg border border-teal-100 text-teal-600 hover:bg-teal-50 transition-all cursor-pointer">
                   <Camera size={18} />
-                </button>
+                  <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                </label>
               </div>
 
               {/* Basic Info */}
               <div className="text-center md:text-left pb-2">
-                <h1 className="text-3xl font-black text-gray-900 tracking-tight">{profileData.name}</h1>
+                <h1 className="text-3xl font-black text-gray-900 tracking-tight">{profileData.name || 'Set Name'}</h1>
                 <p className="flex items-center justify-center md:justify-start gap-1.5 text-teal-600 font-semibold text-sm mt-1">
                   <Briefcase size={14} />
-                  {profileData.specialization} : <span className="text-gray-400 font-medium">{profileData.location}</span>
+                  {profileData.specialization} : <span className="text-gray-400 font-medium">{profileData.location || 'Location Not Set'}</span>
                 </p>
 
                 {/* Badges */}
@@ -108,7 +218,7 @@ const EditProfile = () => {
                   </div>
                   <div className="px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-100 flex items-center gap-1.5">
                     <CheckCircle size={14} className="text-emerald-600" />
-                    <span className="text-xs font-bold text-gray-700">Success <span className="text-emerald-600 ml-1">{profileData.success}</span></span>
+                    <span className="text-xs font-bold text-gray-700">Success <span className="text-emerald-600 ml-1">{profileData.success}%</span></span>
                   </div>
                   <div className="px-3 py-1.5 bg-yellow-50 rounded-full border border-yellow-100 flex items-center gap-1.5">
                     <Star size={14} className="text-yellow-600 fill-yellow-600" />
@@ -126,18 +236,22 @@ const EditProfile = () => {
             <div className="flex flex-col items-center md:items-end gap-3 pb-2">
               <div 
                 className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 cursor-pointer transition-all ${
-                  isAvailable ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-gray-50 border-gray-200 text-gray-500'
+                  profileData.available ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-gray-50 border-gray-200 text-gray-500'
                 }`}
-                onClick={() => setIsAvailable(!isAvailable)}
+                onClick={() => setProfileData(prev => ({ ...prev, available: !prev.available }))}
               >
-                <div className={`w-8 h-4 rounded-full relative transition-all ${isAvailable ? 'bg-teal-500' : 'bg-gray-300'}`}>
-                  <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${isAvailable ? 'right-0.5' : 'left-0.5'}`}></div>
+                <div className={`w-8 h-4 rounded-full relative transition-all ${profileData.available ? 'bg-teal-500' : 'bg-gray-300'}`}>
+                  <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${profileData.available ? 'right-0.5' : 'left-0.5'}`}></div>
                 </div>
-                <span className="text-xs font-bold uppercase tracking-wider">{isAvailable ? 'Available' : 'Unavailable'}</span>
+                <span className="text-xs font-bold uppercase tracking-wider">{profileData.available ? 'Available' : 'Unavailable'}</span>
               </div>
-              <button className="flex items-center gap-2 bg-[#0d9488] text-white px-6 py-2.5 rounded-2xl font-bold text-sm shadow-lg shadow-teal-200 hover:bg-teal-700 transition-all">
-                <Save size={16} />
-                Save Profile
+              <button 
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 bg-[#0d9488] text-white px-6 py-2.5 rounded-2xl font-bold text-sm shadow-lg shadow-teal-200 hover:bg-teal-700 transition-all disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                {saving ? 'Saving...' : 'Save Profile'}
               </button>
             </div>
           </div>
@@ -155,15 +269,29 @@ const EditProfile = () => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FormInput label="Name" icon={<User size={14}/>} value={profileData.name} />
-            <FormInput label="Specialization" icon={<Briefcase size={14}/>} value={profileData.specialization} />
-            <FormInput label="Experience" icon={<Clock size={14}/>} value={profileData.experience} />
-            <FormInput label="Qualifications" icon={<GraduationCap size={14}/>} value={profileData.qualifications} />
-            <FormInput label="Location" icon={<MapPin size={14}/>} value={profileData.location} />
-            <FormInput label="Patients" icon={<Users size={14}/>} value={profileData.patients} />
-            <FormInput label="Success" icon={<CheckCircle size={14}/>} value={profileData.success} />
-            <FormInput label="Rating (out of 5)" icon={<Star size={14}/>} value={profileData.rating} />
-            <FormInput label="Fee (INR)" icon={<IndianRupee size={14}/>} value={profileData.fee} />
+            <FormInput label="Name" name="name" icon={<User size={14}/>} value={profileData.name} onChange={handleInputChange} />
+            <div className="space-y-2">
+              <label className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                <Briefcase size={14}/> SPECIALIZATION
+              </label>
+              <select 
+                name="specialization"
+                value={profileData.specialization}
+                onChange={handleInputChange}
+                className="w-full px-5 py-3.5 rounded-3xl bg-teal-50/30 border border-teal-100 focus:border-teal-400 focus:ring-0 outline-none text-sm font-bold text-gray-700 transition-all appearance-none"
+              >
+                {["General Physician", "Cardiologist", "Dermatologist", "Neurologist", "Orthopedic", "Pediatrician", "Psychiatrist", "Gynecologist", "Oncologist", "ENT Specialist", "Ophthalmologist", "Urologist", "Dentist", "Nephrologist", "Surgeon"].map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <FormInput label="Experience" name="experience" icon={<Clock size={14}/>} value={profileData.experience} onChange={handleInputChange} />
+            <FormInput label="Qualifications" name="qualifications" icon={<GraduationCap size={14}/>} value={profileData.qualifications} onChange={handleInputChange} />
+            <FormInput label="Location" name="location" icon={<MapPin size={14}/>} value={profileData.location} onChange={handleInputChange} />
+            <FormInput label="Patients" name="patients" icon={<Users size={14}/>} value={profileData.patients} onChange={handleInputChange} />
+            <FormInput label="Success %" name="success" icon={<CheckCircle size={14}/>} value={profileData.success} onChange={handleInputChange} />
+            <FormInput label="Rating (1-5)" name="rating" icon={<Star size={14}/>} value={profileData.rating} onChange={handleInputChange} />
+            <FormInput label="Fee (INR)" name="fee" icon={<IndianRupee size={14}/>} value={profileData.fee} onChange={handleInputChange} />
           </div>
         </section>
 
@@ -175,10 +303,12 @@ const EditProfile = () => {
           </h2>
           <div className="relative">
             <textarea 
+              name="about"
               className="w-full h-32 px-5 py-4 rounded-3xl bg-teal-50/30 border border-teal-100 focus:border-teal-400 focus:ring-0 outline-none text-sm font-medium text-gray-700 transition-all resize-none"
-              defaultValue={profileData.about}
+              value={profileData.about}
+              onChange={handleInputChange}
             />
-            <span className="absolute bottom-3 right-5 text-[10px] font-bold text-gray-400">61/500</span>
+            <span className="absolute bottom-3 right-5 text-[10px] font-bold text-gray-400">{profileData.about?.length || 0}/500</span>
           </div>
         </section>
 
@@ -189,57 +319,59 @@ const EditProfile = () => {
               <Calendar size={20} className="text-teal-600" />
               Schedule & Availability
             </h2>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <input 
                 type="date" 
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
                 className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold outline-none focus:border-teal-400"
               />
-              <button className="flex items-center gap-1.5 bg-teal-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-teal-700 transition-all">
+              <input 
+                type="text" 
+                placeholder="Time (e.g. 10:00 AM)"
+                value={newTime}
+                onChange={(e) => setNewTime(e.target.value)}
+                className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold outline-none focus:border-teal-400 w-40"
+              />
+              <button 
+                onClick={addSlot}
+                className="flex items-center gap-1.5 bg-teal-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-teal-700 transition-all"
+              >
                 <Plus size={16} />
-                Add Date
+                Add Slot
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {availability.map((item) => (
-              <div key={item.id} className="bg-teal-50/30 rounded-3xl border border-teal-50 p-6">
+              <div key={item.date} className="bg-teal-50/30 rounded-3xl border border-teal-50 p-6">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-white rounded-xl shadow-sm text-teal-600 border border-teal-100">
                       <Calendar size={18} />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-gray-800">{item.day}</p>
-                      <p className="text-[10px] font-bold text-gray-400">{item.date}</p>
+                      <p className="text-sm font-black text-gray-800">{item.date}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] font-black px-2.5 py-1 bg-teal-100 text-teal-700 rounded-full">{item.slots.length} slots</span>
-                    <button onClick={() => removeDate(item.id)} className="text-red-400 hover:text-red-600 transition-colors">
-                      <Trash2 size={16} />
-                    </button>
                   </div>
                 </div>
 
                 <div className="space-y-2.5">
                   {item.slots.map((slot, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-white px-4 py-2.5 rounded-2xl border border-teal-50 shadow-sm transition-all group hover:border-teal-200">
+                    <div key={slot._id} className="flex items-center justify-between bg-white px-4 py-2.5 rounded-2xl border border-teal-50 shadow-sm transition-all group hover:border-teal-200">
                       <div className="flex items-center gap-2 text-teal-700">
                         <Clock size={14} />
-                        <span className="text-xs font-black">{slot}</span>
+                        <span className="text-xs font-black">{slot.time}</span>
                       </div>
-                      <button onClick={() => removeSlot(item.id, idx)} className="text-gray-300 group-hover:text-red-400 transition-colors">
-                        <X size={14} />
+                      <button onClick={() => removeSlot(slot._id)} className="text-gray-300 group-hover:text-red-400 transition-colors">
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
-                  <div className="flex items-center justify-between bg-white px-4 py-2.5 rounded-2xl border border-teal-50 border-dashed transition-all cursor-pointer hover:bg-teal-50/50">
-                    <input type="text" placeholder="--:--" className="bg-transparent text-xs font-black text-gray-400 outline-none w-20" />
-                    <button className="text-teal-400">
-                      <Plus size={16} />
-                    </button>
-                  </div>
                 </div>
               </div>
             ))}
@@ -252,7 +384,7 @@ const EditProfile = () => {
 };
 
 /* ── Reusable Form Input ── */
-const FormInput = ({ label, icon, value }) => (
+const FormInput = ({ label, name, icon, value, onChange }) => (
   <div className="space-y-2">
     <label className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
       {icon}
@@ -260,7 +392,9 @@ const FormInput = ({ label, icon, value }) => (
     </label>
     <input 
       type="text" 
-      defaultValue={value}
+      name={name}
+      value={value}
+      onChange={onChange}
       className="w-full px-5 py-3.5 rounded-3xl bg-teal-50/30 border border-teal-100 focus:border-teal-400 focus:ring-0 outline-none text-sm font-bold text-gray-700 transition-all"
     />
   </div>

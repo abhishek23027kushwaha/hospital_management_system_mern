@@ -134,6 +134,7 @@ export const deleteService = async (req, res) => {
 export const addServiceSlot = async (req, res) => {
   try {
     const { date, time } = req.body;
+     console.log(date,time);
     if (!date || !time) {
       return res.status(400).json({ success: false, message: "Date and time are required" });
     }

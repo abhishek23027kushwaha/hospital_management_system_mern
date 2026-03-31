@@ -123,6 +123,16 @@ const Navbar = () => {
                           <p className="text-sm font-bold text-gray-800 truncate">{user.name}</p>
                           <p className="text-xs text-gray-400 truncate">{user.email}</p>
                         </div>
+                        {user?.role === 'doctor' && (
+                          <Link
+                            to="/doctor-admin"
+                            onClick={() => setDropdownOpen(false)}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 transition-colors font-medium no-underline border-b border-gray-50"
+                          >
+                            <User size={15} className="text-green-600" />
+                            Dashboard
+                          </Link>
+                        )}
                         <button
                           onClick={handleLogout}
                           className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors font-medium"
@@ -137,7 +147,7 @@ const Navbar = () => {
               ) : (
                 <>
                   <Link
-                    to="/doctor-admin"
+                    to="/doctor/login"
                     className="flex items-center gap-2 px-4 xl:px-6 py-2 border-2 border-green-600 text-green-700 rounded-full font-bold text-sm hover:bg-green-50 transition-all no-underline"
                   >
                     <User className="size-4" />
@@ -231,7 +241,7 @@ const Navbar = () => {
                 {!user && (
                   <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-gray-100">
                     <Link
-                      to="/doctor-admin"
+                      to="/doctor/login"
                       className="flex items-center justify-center gap-2 py-2.5 border-2 border-green-600 text-green-700 rounded-xl font-bold text-sm hover:bg-green-50 transition-all no-underline"
                     >
                       <User className="size-4" />

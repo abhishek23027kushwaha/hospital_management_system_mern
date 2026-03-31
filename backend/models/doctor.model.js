@@ -82,6 +82,26 @@ const doctorSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    qualifications: {
+      type: String,
+      default: "",
+    },
+    location: {
+      type: String,
+      default: "",
+    },
+    patients: {
+      type: String,
+      default: "0",
+    },
+    success: {
+      type: String,
+      default: "100",
+    },
+    rating: {
+      type: Number,
+      default: 5,
+    },
     role: {
       type: String,
       default: "doctor",

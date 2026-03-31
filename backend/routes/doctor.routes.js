@@ -13,6 +13,7 @@ import {
 } from "../controllers/doctor.controller.js";
 import { protectRoute } from "../middlewares/auth.middleware.js";
 import { isDoctor } from "../middlewares/role.middleware.js";
+import { handleUpload, uploadImage } from "../utils/multer.js";
 
 const router = express.Router();
 
@@ -26,7 +27,7 @@ router.use(protectRoute, isDoctor);
 
 // Profile
 router.get("/profile",  getDoctorProfile);
-router.put("/profile",  updateDoctorProfile);
+router.put("/profile",  handleUpload(uploadImage), updateDoctorProfile);
 
 // Slots
 router.get   ("/slots",          getDoctorSlots);
