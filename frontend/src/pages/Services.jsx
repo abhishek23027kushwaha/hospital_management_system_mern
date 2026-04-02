@@ -134,7 +134,7 @@ const Services = () => {
                     {/* Book Now */}
                     <Link
                       to={`/book-service/${svc._id}`}
-                      className="mt-auto flex items-center justify-center gap-2 w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition-colors duration-200 shadow-md shadow-emerald-100"
+                      className="mt-auto flex items-center justify-center gap-2 w-full py-2.5 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white text-sm font-bold rounded-xl transition-all duration-200 shadow-lg shadow-green-500/20"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <polyline points="13 17 18 12 13 7" /><polyline points="6 17 11 12 6 7" />

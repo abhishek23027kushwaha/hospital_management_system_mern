@@ -46,7 +46,7 @@ const DoctorCard = ({ _id, name, speciality, specialization, experience, image, 
           e.stopPropagation();
           window.location.href = `/book-appointment/${_id || ""}`;
         }}
-        className="w-full bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white py-3 rounded-xl font-black flex items-center justify-center gap-1.5 shadow-md shadow-green-500/20 hover:shadow-green-500/40 transition-all active:scale-95 mt-auto"
+        className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-green-500/20 active:scale-95 mt-auto transition-all transition-colors duration-200"
       >
         <ChevronRight size={16} />
         Book Now
