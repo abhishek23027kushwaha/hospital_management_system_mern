@@ -1,11 +1,37 @@
 import ServiceAppointment from "../models/serviceAppointment.model.js";
 import Service from "../models/service.model.js";
 import User from "../models/user.model.js";
+import Razorpay from "razorpay";
+import crypto from "crypto";
+
+const razorpayInstance = new Razorpay({
+  key_id:     process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+const verifySignature = (orderId, paymentId, signature) => {
+  const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+  hmac.update(orderId + "|" + paymentId);
+  const generated = hmac.digest("hex");
+  return generated === signature;
+};
 
 // ── POST /api/service-appointments/book ───────────────────────────────────
 export const bookServiceAppointment = async (req, res) => {
   try {
-    const { serviceId, slotId, date, timeSlot, message } = req.body;
+    const { 
+      serviceId, 
+      slotId, 
+      date, 
+      timeSlot, 
+      message,
+      patientName,
+      patientEmail,
+      patientPhone,
+      patientAge,
+      patientGender,
+      paymentMethod
+    } = req.body;
 
     if (!serviceId || !date || !timeSlot) {
       return res.status(400).json({ success: false, message: "Service, date and time slot are required" });
@@ -23,21 +49,31 @@ export const bookServiceAppointment = async (req, res) => {
       if (slot && slot.isBooked) {
         return res.status(409).json({ success: false, message: "This slot is already booked" });
       }
-      if (slot) {
-        slot.isBooked = true;
-        await service.save();
-      }
+    }
+
+    const isCash = paymentMethod === "Cash";
+    let order = null;
+
+    if (!isCash) {
+      // 1. Create Razorpay Order
+      const amount = service.price * 100; // in paise
+      const options = {
+        amount,
+        currency: "INR",
+        receipt: `receipt_svc_${Date.now()}`,
+      };
+      order = await razorpayInstance.orders.create(options);
     }
 
     const user = await User.findById(req.userId);
 
     const appt = await ServiceAppointment.create({
       patient:       req.userId,
-      patientName:   user.name,
-      patientEmail:  user.email,
-      patientPhone:  user.phone || "",
-      patientAge:    user.age || null,
-      patientGender: user.gender || "",
+      patientName:   patientName || user.name,
+      patientEmail:  patientEmail || user.email,
+      patientPhone:  patientPhone || user.phone || "",
+      patientAge:    patientAge || user.age || null,
+      patientGender: patientGender || user.gender || "",
       service:       serviceId,
       serviceName:   service.name,
       slotId:        slotId || null,
@@ -45,14 +81,67 @@ export const bookServiceAppointment = async (req, res) => {
       timeSlot,
       message:       message || "",
       fee:           service.price,
+      paymentMethod: paymentMethod || "Online",
+      razorpayOrderId: order ? order.id : null,
+      isPaid:        false,
     });
 
-    // Increment total appointments on service
-    await Service.findByIdAndUpdate(serviceId, { $inc: { totalAppointments: 1 } });
+    // If Cash, mark slot booked immediately
+    if (isCash && slotId) {
+      const slotIndex = service.slots.findIndex(s => s._id.toString() === slotId);
+      if (slotIndex !== -1) {
+        service.slots[slotIndex].isBooked = true;
+        await service.save();
+      }
+      // Increment total appointments on service
+      await Service.findByIdAndUpdate(serviceId, { $inc: { totalAppointments: 1 } });
+    }
 
-    return res.status(201).json({ success: true, message: "Service appointment booked", appointment: appt });
+    return res.status(201).json({ 
+      success: true, 
+      message: isCash ? "Service appointment booked (Cash)" : "Order created successfully", 
+      appointment: appt,
+      order: order
+    });
   } catch (err) {
     console.error("bookServiceAppointment error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// ── POST /api/service-appointments/verify-payment ──────────────────────────
+export const verifyServiceAppointmentPayment = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointmentId } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !appointmentId) {
+      return res.status(400).json({ success: false, message: "Payment details missing" });
+    }
+
+    // 1. Verify Signature
+    const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+    if (!isValid) return res.status(400).json({ success: false, message: "Invalid payment signature" });
+
+    // 2. Update Appointment
+    const appt = await ServiceAppointment.findById(appointmentId);
+    if (!appt) return res.status(404).json({ success: false, message: "Appointment not found" });
+
+    appt.isPaid = true;
+    appt.razorpayPaymentId = razorpay_payment_id;
+    appt.razorpaySignature = razorpay_signature;
+    await appt.save();
+
+    // 3. Mark Slot as Booked in Service model
+    if (appt.slotId) {
+      await Service.findOneAndUpdate(
+        { _id: appt.service, "slots._id": appt.slotId },
+        { $set: { "slots.$.isBooked": true }, $inc: { totalAppointments: 1 } }
+      );
+    }
+
+    return res.status(200).json({ success: true, message: "Payment verified and appointment confirmed", appointment: appt });
+  } catch (err) {
+    console.error("verifyServiceAppointmentPayment error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };

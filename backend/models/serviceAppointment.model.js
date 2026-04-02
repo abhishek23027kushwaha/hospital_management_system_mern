@@ -38,9 +38,26 @@ const serviceAppointmentSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    paymentMethod: {
+      type: String,
+      enum: ["Cash", "Online"],
+      default: "Online",
+    },
     isPaid: {
       type: Boolean,
       default: false,
+    },
+    razorpayOrderId: {
+      type: String,
+      default: null,
+    },
+    razorpayPaymentId: {
+      type: String,
+      default: null,
+    },
+    razorpaySignature: {
+      type: String,
+      default: null,
     },
 
     // ── Status ──

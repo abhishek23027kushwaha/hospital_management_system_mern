@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-
+import { useState ,useEffect} from 'react';
+import axios from 'axios';
 // ── Service Images ─────────────────────────────────────────────
 import imgBloodTest from '../assets/service-blood-test.png';
 import imgXray from '../assets/service-xray.png';
@@ -8,49 +9,6 @@ import imgBP from '../assets/service-bp-monitor.png';
 import imgBloodSugar from '../assets/service-blood-sugar.png';
 
 // ── Services Data ──────────────────────────────────────────────
-const services = [
-  {
-    id: 1,
-    name: "Full Body Health Checkup",
-    description: "Complete head-to-toe examination with comprehensive lab tests to assess your overall health status.",
-    image: imgBloodTest,
-    duration: "2–3 hours",
-    price: "₹1,499",
-    tag: "Most Popular",
-    tagColor: "bg-emerald-500",
-  },
-  {
-    id: 2,
-    name: "X-Ray Scan",
-    description: "High-resolution digital X-ray imaging for accurate diagnosis of bones, lungs, and internal organs.",
-    image: imgXray,
-    duration: "30 mins",
-    price: "₹599",
-    tag: "Quick",
-    tagColor: "bg-teal-500",
-  },
-  {
-    id: 3,
-    name: "Blood Pressure Check",
-    description: "Accurate blood pressure monitoring using advanced digital equipment with instant results.",
-    image: imgBP,
-    duration: "15 mins",
-    price: "₹199",
-    tag: "Walk-in",
-    tagColor: "bg-cyan-500",
-  },
-  {
-    id: 4,
-    name: "Blood Sugar Test",
-    description: "Precise blood glucose level measurement to monitor and manage diabetes effectively.",
-    image: imgBloodSugar,
-    duration: "20 mins",
-    price: "₹299",
-    tag: "Essential",
-    tagColor: "bg-emerald-600",
-  },
-];
-
 const highlights = [
   {
     icon: (
@@ -91,6 +49,26 @@ const highlights = [
 ];
 
 const Services = () => {
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchServices = async () => {
+    try {
+      const { data } = await axios.get('http://localhost:8000/api/services');
+      if (data.success) {
+        setServices(data.services);
+      }
+    } catch (error) {
+      console.error("Error fetching services:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
 
@@ -121,59 +99,65 @@ const Services = () => {
       {/* ── Service Cards ─────────────────────────────────────── */}
       <section className="py-14 px-6 bg-emerald-50/30">
         <div className="max-w-[1200px] mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {services.map((svc) => (
-              <div
-                key={svc.id}
-                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 border border-gray-100 flex flex-col"
-              >
-                {/* Image + Tag */}
-                <div className="relative h-52 bg-gray-50 overflow-hidden">
-                  <span className={`absolute top-3 left-3 z-10 ${svc.tagColor} text-white text-[10px] font-bold px-2.5 py-1 rounded-full`}>
-                    {svc.tag}
-                  </span>
-                  <img
-                    src={svc.image}
-                    alt={svc.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
-                </div>
-
-                {/* Card Body */}
-                <div className="flex flex-col flex-1 p-5 gap-4">
-                  <div className="space-y-1.5">
-                    <h3 className="text-base font-bold text-gray-800 group-hover:text-emerald-700 transition-colors leading-snug">
-                      {svc.name}
-                    </h3>
-                    <p className="text-xs text-gray-500 leading-relaxed">{svc.description}</p>
-                  </div>
-
-                  {/* Duration + Price */}
-                  <div className="flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-3">
-                    <span className="flex items-center gap-1">
-                      <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                      </svg>
-                      {svc.duration}
+          {services.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No services available at the moment.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {services.map((svc) => (
+                <div
+                  key={svc._id}
+                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 border border-gray-100 flex flex-col"
+                >
+                  {/* Image + Tag */}
+                  <div className="relative h-52 bg-gray-50 overflow-hidden">
+                    <span className={`absolute top-3 left-3 z-10 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full`}>
+                      {svc.available ? 'Available' : 'Unavailable'}
                     </span>
-                    <span className="font-bold text-emerald-600 text-sm">{svc.price}</span>
+                    <img
+                      src={svc.image || imgBloodTest}
+                      alt={svc.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
                   </div>
 
-                  {/* Book Now */}
-                  <Link
-                    to="/appointments"
-                    className="mt-auto flex items-center justify-center gap-2 w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition-colors duration-200 shadow-md shadow-emerald-100"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <polyline points="13 17 18 12 13 7" /><polyline points="6 17 11 12 6 7" />
-                    </svg>
-                    Book Now
-                  </Link>
+                  {/* Card Body */}
+                  <div className="flex flex-col flex-1 p-5 gap-4">
+                    <div className="space-y-1.5">
+                      <h3 className="text-base font-bold text-gray-800 group-hover:text-emerald-700 transition-colors leading-snug">
+                        {svc.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{svc.about || svc.description}</p>
+                    </div>
+
+                    {/* Duration + Price */}
+                    <div className="flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-3">
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        {svc.duration || "Consultation"}
+                      </span>
+                      <span className="font-bold text-emerald-600 text-sm">₹{svc.price}</span>
+                    </div>
+
+                    {/* Book Now */}
+                    <Link
+                      to={`/book-service/${svc._id}`}
+                      className="mt-auto flex items-center justify-center gap-2 w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition-colors duration-200 shadow-md shadow-emerald-100"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <polyline points="13 17 18 12 13 7" /><polyline points="6 17 11 12 6 7" />
+                      </svg>
+                      Book Now
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
