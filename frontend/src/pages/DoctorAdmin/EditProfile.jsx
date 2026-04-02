@@ -314,7 +314,7 @@ const EditProfile = () => {
           </div>
         </section>
 
-        {/* Section: Schedule & Availability */}
+        {/* Section: Schedule & Availability
         <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
             <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
@@ -378,7 +378,7 @@ const EditProfile = () => {
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
 
       </div>
     </div>

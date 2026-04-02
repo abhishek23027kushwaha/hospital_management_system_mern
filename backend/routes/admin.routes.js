@@ -29,7 +29,7 @@ router.get("/dashboard", getDashboardStats);
 router.post  ("/doctors",      handleUpload(uploadImage), addDoctor);
 router.get   ("/doctors",      listDoctors);
 
-router.put   ("/doctors/:id",updateDoctor);
+router.put   ("/doctors/:id", handleUpload(uploadImage), updateDoctor);
 router.delete("/doctors/:id",deleteDoctor);
 
 // Appointment management (type: doctor | service)

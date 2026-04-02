@@ -9,7 +9,7 @@ import {
   PhoneCall, 
   CalendarCheck 
 } from "lucide-react";
-import doctorsHero from "../assets/doctors_hero.png";
+import doctorsHero from "../assets/BannerImg.png";
 
 const HeroSection = () => {
   return (

@@ -41,7 +41,7 @@ ${form.message}`;
   return (
     <div className="min-h-screen bg-white flex flex-col">
 
-      {/* ── Hero ───────────────────────────────────────────── */}
+      {/* ── Hero ─────────────────────────────────────────────
       <section
         className="relative py-12 px-6 text-center overflow-hidden"
         style={{ background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%)" }}
@@ -58,7 +58,7 @@ ${form.message}`;
             Have a question or need to book? Fill the form and we'll connect you instantly.
           </p>
         </div>
-      </section>
+      </section> */}
 
       {/* ── Main Layout ────────────────────────────────────── */}
       <section className="flex-1 py-12 px-4 bg-emerald-50/30">
@@ -68,9 +68,9 @@ ${form.message}`;
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
             <div className="mb-7">
               <h2 className="text-2xl font-bold text-gray-900">Contact Our Clinic</h2>
-              <p className="text-emerald-600 text-sm mt-1 italic">
+              {/* <p className="text-emerald-600 text-sm mt-1 italic">
                 Fill the form — we'll open WhatsApp so you can connect with us instantly.
-              </p>
+              </p> */}
             </div>
 
             <form onSubmit={handleWhatsApp} className="space-y-5">

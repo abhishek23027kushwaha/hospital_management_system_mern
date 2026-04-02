@@ -39,12 +39,12 @@ const Footer = () => {
     <footer className="relative bg-[#ecfdf5] border-t border-[#d1fae5] overflow-hidden">
       {/* Decorative pulse icon on the left */}
       <div className="absolute left-4 top-1/4 -translate-y-1/2 opacity-20 pointer-events-none">
-        <Activity size={100} className="text-[#34ad7b]" />
+        <Activity size={100} className="text-green-500" />
       </div>
       
       {/* Decorative stethoscope on the right */}
       <div className="absolute right-8 top-12 opacity-20 pointer-events-none rotate-12">
-        <Stethoscope size={100} className="text-[#34ad7b]" />
+        <Stethoscope size={100} className="text-green-500" />
       </div>
 
       {/* Main content */}
@@ -55,15 +55,15 @@ const Footer = () => {
           <div className="space-y-8">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-white border border-emerald-100 flex items-center justify-center shadow-md overflow-hidden">
-                 <img src="https://via.placeholder.com/150" alt="Medicare Logo" className="w-8 h-8 rounded-full border border-emerald-500 shadow-inner" />
+                 <img src="https://via.placeholder.com/150" alt="Medicare Logo" className="w-8 h-8 rounded-full border border-green-500 shadow-inner" />
               </div>
               <div>
                 <p className="text-[#114232] text-2xl font-bold leading-none tracking-tight">MediCare</p>
-                <p className="text-[#34ad7b] text-xs font-bold uppercase tracking-[0.05em] mt-1.5 opacity-90">Healthcare Solutions</p>
+                <p className="text-green-500 text-xs font-bold uppercase tracking-[0.05em] mt-1.5 opacity-90">Healthcare Solutions</p>
               </div>
             </div>
 
-            <p className="text-[#34ad7b] text-[15px] leading-relaxed italic font-medium max-w-[280px]">
+            <p className="text-green-500 text-[15px] leading-relaxed italic font-medium max-w-[280px]">
               Your trusted partner in healthcare innovation. We&apos;re committed to providing exceptional medical care with cutting-edge technology and compassionate service.
             </p>
 
@@ -94,7 +94,7 @@ const Footer = () => {
                     to={to}
                     className="flex items-center gap-4 text-[#114232]/80 hover:text-[#114232] transition-all group"
                   >
-                    <div className="w-7 h-7 rounded-full bg-[#d1fae5] flex items-center justify-center flex-shrink-0 transition-all group-hover:bg-[#34ad7b] shadow-sm">
+                    <div className="w-7 h-7 rounded-full bg-[#d1fae5] flex items-center justify-center flex-shrink-0 transition-all group-hover:bg-green-500 shadow-sm">
                       <ChevronRight size={14} className="text-[#114232] group-hover:text-white transition-colors" />
                     </div>
                     <span className="text-[15px] font-bold">{label}</span>
@@ -110,7 +110,7 @@ const Footer = () => {
             <ul className="space-y-5">
               {services.map((service, i) => (
                 <li key={i} className="flex items-center gap-4 group">
-                  <div className="w-2.5 h-2.5 bg-[#34ad7b] rounded-full flex-shrink-0 shadow-sm shadow-[#34ad7b]/40 group-hover:scale-125 transition-transform" />
+                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full flex-shrink-0 shadow-sm shadow-green-500/40 group-hover:scale-125 transition-transform" />
                   <span className="text-[#114232]/80 text-[15px] font-bold hover:text-[#114232] cursor-pointer transition-colors leading-tight">
                     {service}
                   </span>
@@ -133,9 +133,9 @@ const Footer = () => {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="flex-1 bg-transparent outline-none text-[14px] text-gray-700 placeholder-[#34ad7b]/50 pl-5 font-medium"
+                className="flex-1 bg-transparent outline-none text-[14px] text-gray-700 placeholder-green-500/50 pl-5 font-medium"
               />
-              <button className="bg-[#00c984] text-white text-[13px] font-bold px-7 py-3 rounded-full flex items-center gap-2 hover:opacity-90 transition-all shadow-md shadow-[#00c984]/30 active:scale-95">
+              <button className="bg-green-500 text-white text-[13px] font-bold px-7 py-3 rounded-full flex items-center gap-2 hover:opacity-90 transition-all shadow-md shadow-green-500/30 active:scale-95">
                 <Send size={15} />
                 Subscribe
               </button>
@@ -148,7 +148,7 @@ const Footer = () => {
                   key={i}
                   href={href}
                   aria-label={label}
-                  className="w-11 h-11 bg-white border border-[#34ad7b]/20 rounded-2xl flex items-center justify-center text-[#34ad7b] hover:bg-[#34ad7b] hover:text-white hover:border-[#34ad7b] transition-all shadow-md group"
+                  className="w-11 h-11 bg-white border border-green-500/20 rounded-2xl flex items-center justify-center text-green-500 hover:bg-green-500 hover:text-white hover:border-green-500 transition-all shadow-md group"
                 >
                   <Icon size={20} className="group-hover:scale-110 transition-transform" />
                 </a>
@@ -166,13 +166,13 @@ const Footer = () => {
           </p>
           
           <p className="text-[#114232]/50 text-[14px] font-bold flex items-center gap-2">
-            Designed by <span className="text-[#34ad7b] font-black underline decoration-2 underline-offset-4 cursor-pointer hover:text-[#114232] transition-colors">Hexagon Digital Services</span>
+            Designed by <span className="text-green-500 font-black underline decoration-2 underline-offset-4 cursor-pointer hover:text-[#114232] transition-colors">Hexagon Digital Services</span>
           </p>
           
           {/* Back to Top */}
           <button
             onClick={scrollToTop}
-            className="w-11 h-11 bg-[#00c984] rounded-full flex items-center justify-center text-white hover:scale-110 hover:-translate-y-1 transition-all shadow-xl active:scale-90 flex-shrink-0"
+            className="w-11 h-11 bg-green-500 rounded-full flex items-center justify-center text-white hover:scale-110 hover:-translate-y-1 transition-all shadow-xl active:scale-90 flex-shrink-0"
           >
             <ArrowUp size={22} strokeWidth={3} />
           </button>

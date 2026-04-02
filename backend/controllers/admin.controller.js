@@ -5,6 +5,7 @@ import Doctor from "../models/doctor.model.js";
 import DoctorAppointment from "../models/doctorAppointment.model.js";
 import ServiceAppointment from "../models/serviceAppointment.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import fs from "fs";
 
 
 // ── helpers ───────────────────────────────────────────────────────────────
@@ -176,24 +177,59 @@ export const listDoctors = async (req, res) => {
 
 // ── PUT /api/admin/doctors/:id ────────────────────────────────────────────
 export const updateDoctor = async (req, res) => {
+  console.log("Updating doctor ID:", req.params.id);
+  console.log("Update data (body):", req.body);
   try {
-    const { name, email, phone, specialization, experience, fee, about, available, image } = req.body;
+    const { 
+      name, email, password, phone, specialization, experience, fee, about, available, 
+      qualifications, location, patients, success, rating, slots 
+    } = req.body;
+
     const updates = {};
-    if (name !== undefined)           updates.name           = name.trim();
-    if (email !== undefined)          updates.email          = email.toLowerCase().trim();
-    if (phone !== undefined)          updates.phone          = phone;
-    if (specialization !== undefined) updates.specialization = specialization;
-    if (experience !== undefined)     updates.experience     = Number(experience);
-    if (fee !== undefined)            updates.fee            = Number(fee);
-    if (about !== undefined)          updates.about          = about;
-    if (available !== undefined)      updates.available      = Boolean(available);
-    if (image !== undefined)          updates.image          = image;
+    if (name)           updates.name           = String(name).trim();
+    if (email)          updates.email          = String(email).toLowerCase().trim();
+    if (phone !== undefined)          updates.phone          = String(phone);
+    if (specialization !== undefined) updates.specialization = String(specialization);
+    if (experience !== undefined)     updates.experience     = Number(experience) || 0;
+    if (fee !== undefined)            updates.fee            = Number(fee) || 0;
+    if (about !== undefined)          updates.about          = String(about);
+    if (password && String(password).length >= 6) {
+      updates.password = await bcrypt.hash(String(password), 12);
+      updates.plainPassword = String(password);
+    }
+    if (available !== undefined)      updates.available      = String(available) === "true";
+    if (qualifications !== undefined) updates.qualifications = String(qualifications);
+    if (location !== undefined)       updates.location       = String(location);
+    if (patients !== undefined)       updates.patients       = String(patients);
+    if (success !== undefined)        updates.success        = String(success);
+    if (rating !== undefined)         updates.rating         = Number(rating) || 5;
+
+    // Handle slots
+    if (slots !== undefined) {
+      try {
+        if (typeof slots === 'string' && slots.trim()) {
+           updates.slots = JSON.parse(slots);
+        } else if (Array.isArray(slots)) {
+           updates.slots = slots;
+        }
+      } catch (e) {
+        console.error("Error parsing slots in update:", e);
+        fs.appendFileSync("./error_logs.log", `Slot parse error: ${e.message}\n`);
+      }
+    }
+
+    // Handle image upload if a new file is provided
+    if (req.file) {
+      const imageUrl = await uploadToCloudinary(req.file.buffer, "doctors");
+      updates.image = imageUrl;
+    }
 
     const doctor = await Doctor.findByIdAndUpdate(req.params.id, updates, { new: true }).select("-password");
     if (!doctor) return res.status(404).json({ success: false, message: "Doctor not found" });
-    return res.status(200).json({ success: true, message: "Doctor updated", doctor });
+    return res.status(200).json({ success: true, message: "Doctor updated successfully", doctor });
   } catch (err) {
-    return res.status(500).json({ success: false, message: "Server error" });
+    console.error("CRITICAL: updateDoctor error:", err);
+    return res.status(500).json({ success: false, message: `Server error: ${err.message || 'Unknown error'}` });
   }
 };
 

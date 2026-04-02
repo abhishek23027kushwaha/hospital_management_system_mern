@@ -45,9 +45,12 @@ app.use((req, res) => {
 });
 
 // ── Global error handler ──────────────────────────────────────────────────
+import fs from "fs";
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
-  res.status(500).json({ success: false, message: "Internal server error" });
+  const logMsg = `[${new Date().toISOString()}] ${req.method} ${req.url} - Error: ${err.message}\nStack: ${err.stack}\n`;
+  fs.appendFileSync("./error_logs.log", logMsg);
+  res.status(500).json({ success: false, message: "Internal server error", debug: err.message });
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────
