@@ -25,7 +25,7 @@ const Certified = () => {
         <div className="flex flex-col items-center mb-12">
           <div className="flex items-center justify-center w-full mb-4">
             <div className="hidden md:block h-[1px] bg-gradient-to-r from-transparent to-gray-200 flex-grow max-w-[200px]"></div>
-            <h2 className="mx-8 text-4xl md:text-5xl font-serif font-black text-[#1e584a] text-center tracking-tight uppercase">
+            <h2 className="mx-8 text-4xl md:text-5xl font-serif font-black text-green-500 text-center tracking-tight uppercase">
               CERTIFIED & EXCELLENCE
             </h2>
             <div className="hidden md:block h-[1px] bg-gradient-to-l from-transparent to-gray-200 flex-grow max-w-[200px]"></div>

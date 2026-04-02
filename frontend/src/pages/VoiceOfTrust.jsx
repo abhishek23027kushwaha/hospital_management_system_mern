@@ -177,7 +177,7 @@ const VoiceOfTrust = () => {
       <div className="max-w-6xl mx-auto px-4 md:px-8">
         {/* Title */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-serif font-black text-[#1e584a] mb-4">
+          <h2 className="text-4xl md:text-5xl font-serif font-black text-green-500 mb-4">
             Voices of Trust
           </h2>
           <p className="text-gray-500 text-lg max-w-2xl mx-auto">

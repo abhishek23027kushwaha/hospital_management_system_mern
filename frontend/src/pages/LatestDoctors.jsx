@@ -62,7 +62,7 @@ const Doctors = () => {
       <div className="flex justify-center mt-24">
         <button 
           onClick={() => navigate('/doctors')}
-          className="group relative bg-[#1e584a] text-white px-12 py-5 rounded-[24px] font-black shadow-2xl shadow-green-900/20 hover:scale-105 transition-all active:scale-95 cursor-pointer overflow-hidden"
+          className="group relative bg-green-500 text-white px-12 py-5 rounded-[24px] font-black shadow-2xl shadow-green-900/10 hover:scale-105 transition-all active:scale-95 cursor-pointer overflow-hidden"
         >
           <span className="relative z-10 flex items-center gap-2">
             Explore All Specialists
