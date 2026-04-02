@@ -57,29 +57,32 @@ const AllDoctors = () => {
   return (
     <div className="min-h-screen bg-gray-50/50">
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#e8f8f3] to-blue-50 py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-serif font-black text-gray-800">
-            Find Your <span className="text-[#22c55e]">Specialist</span>
+      <div className="bg-[#ecfdf5] py-20 px-6 text-center">
+        <div className="max-w-4xl mx-auto space-y-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-[#114232]">
+            Our Medical Experts
           </h1>
-          <p className="text-gray-500 text-lg">
-            Browse our team of {doctors.length}+ verified healthcare professionals.
+          <p className="text-[#34ad7b] text-lg font-medium">
+            Find your ideal doctor by name or specialization
           </p>
-
+ 
           {/* Search Bar */}
-          <div className="relative max-w-xl mx-auto mt-8">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative max-w-2xl mx-auto mt-10">
+            <Search 
+              size={24} 
+              className="absolute left-6 top-1/2 -translate-y-1/2 text-[#34ad7b]" 
+            />
             <input
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Search by name or speciality..."
-              className="w-full pl-11 pr-10 py-4 rounded-2xl bg-white border border-gray-200 shadow-lg shadow-gray-100 text-gray-700 text-sm outline-none focus:border-[#22c55e] focus:ring-2 focus:ring-[#22c55e]/20 transition-all font-medium"
+              placeholder="Search doctors by name or specialization..."
+              className="w-full pl-16 pr-8 py-5 rounded-full bg-white border-2 border-[#34ad7b]/30 focus:border-[#34ad7b] shadow-xl shadow-green-900/5 text-gray-700 text-base outline-none transition-all font-medium placeholder:text-gray-400"
             />
             {query && (
               <button
                 onClick={() => setQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-gray-100 p-1.5 rounded-full transition-colors"
               >
                 <X size={16} />
               </button>
