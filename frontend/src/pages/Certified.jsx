@@ -79,10 +79,38 @@ const Certified = () => {
         <div className="mt-32 pt-16 border-t border-gray-100">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
             {[
-              { label: "Years of Excellence", value: "25+", icon: "🏆" },
-              { label: "Expert Doctors", value: "500+", icon: "👨‍⚕️" },
-              { label: "Happy Patients", value: "10k+", icon: "😊" },
-              { label: "Success Rate", value: "99%", icon: "⭐" },
+              { 
+                label: "Years of Excellence", 
+                value: "25+", 
+                icon: "🏆",
+                bg: "bg-amber-50/50",
+                border: "border-amber-100",
+                text: "text-amber-600"
+              },
+              { 
+                label: "Expert Doctors", 
+                value: "500+", 
+                icon: "👨‍⚕️",
+                bg: "bg-blue-50/50",
+                border: "border-blue-100",
+                text: "text-blue-600"
+              },
+              { 
+                label: "Happy Patients", 
+                value: "10k+", 
+                icon: "😊",
+                bg: "bg-rose-50/50",
+                border: "border-rose-100",
+                text: "text-rose-600"
+              },
+              { 
+                label: "Success Rate", 
+                value: "99%", 
+                icon: "⭐",
+                bg: "bg-emerald-50/50",
+                border: "border-emerald-100",
+                text: "text-emerald-600"
+              },
             ].map((stat, i) => (
               <motion.div
                 key={i}
@@ -90,11 +118,17 @@ const Certified = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="flex flex-col items-center p-8 rounded-3xl bg-gradient-to-br from-white to-[#f0f9f6] border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                className={`flex flex-col items-center p-8 rounded-3xl ${stat.bg} border ${stat.border} shadow-sm hover:shadow-md transition-shadow group`}
               >
-                <span className="text-4xl mb-4">{stat.icon}</span>
-                <span className="text-4xl font-black text-[#1e584a] mb-2">{stat.value}</span>
-                <span className="text-sm font-bold text-gray-500 uppercase tracking-widest text-center">{stat.label}</span>
+                <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                  {stat.icon}
+                </div>
+                <span className={`text-4xl font-black ${stat.text} mb-2 tracking-tight`}>
+                  {stat.value}
+                </span>
+                <span className="text-sm font-bold text-gray-500 uppercase tracking-widest text-center whitespace-nowrap">
+                  {stat.label}
+                </span>
               </motion.div>
             ))}
           </div>
