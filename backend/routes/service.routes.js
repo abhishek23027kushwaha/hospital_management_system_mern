@@ -21,7 +21,7 @@ router.get("/:id",     getServiceById);
 // ── Admin only ────────────────────────────────────────────────────────────
 router.get   ("/dashboard",        protectRoute, isAdmin, getServiceDashboard);
 router.post  ("/",                 protectRoute, isAdmin, handleUpload(uploadImage), addService);
-router.put   ("/:id",              protectRoute, isAdmin, updateService);
+router.put   ("/:id",              protectRoute, isAdmin, handleUpload(uploadImage), updateService);
 router.delete("/:id",              protectRoute, isAdmin, deleteService);
 router.post  ("/:id/slots",        protectRoute, isAdmin, addServiceSlot);
 

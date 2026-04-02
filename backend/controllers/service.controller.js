@@ -102,20 +102,60 @@ export const getServiceById = async (req, res) => {
 // ── PUT /api/services/:id (admin) ─────────────────────────────────────────
 export const updateService = async (req, res) => {
   try {
-    const { name, price, about, instructions, image, available } = req.body;
+    const { name, price, about, instructions, available, slots } = req.body;
     const updates = {};
-    if (name !== undefined)         updates.name         = name.trim();
-    if (price !== undefined)        updates.price        = Number(price);
-    if (about !== undefined)        updates.about        = about;
-    if (instructions !== undefined) updates.instructions = instructions.filter(Boolean);
-    if (image !== undefined)        updates.image        = image;
-    if (available !== undefined)    updates.available    = Boolean(available);
+
+    if (name !== undefined) updates.name = name.trim();
+    if (price !== undefined) updates.price = Number(price);
+    if (about !== undefined) updates.about = about;
+    if (available !== undefined) {
+      updates.available = (available === "true" || available === true || available === "Available");
+    }
+
+    // Handle Image Upload
+    if (req.file) {
+      try {
+        updates.image = await uploadToCloudinary(req.file.buffer, "services");
+      } catch (uploadErr) {
+        console.error("Cloudinary upload error in updateService:", uploadErr);
+        return res.status(500).json({ success: false, message: "Failed to upload new image" });
+      }
+    }
+
+    // Handle Instructions & Slots (Parsing JSON strings if from FormData)
+    try {
+      if (instructions !== undefined) {
+        const rawInstructions = typeof instructions === 'string' ? JSON.parse(instructions) : instructions;
+        if (Array.isArray(rawInstructions)) {
+          updates.instructions = rawInstructions.filter(Boolean);
+        }
+      }
+      if (slots !== undefined) {
+        const rawSlots = typeof slots === 'string' ? JSON.parse(slots) : slots;
+        if (Array.isArray(rawSlots)) {
+          updates.slots = rawSlots.map(s => {
+            if (typeof s === 'string' && s.includes(',')) {
+              const [date, time] = s.split(', ');
+              return { date: date.trim(), time: time.trim(), isBooked: false };
+            }
+            if (typeof s === 'object' && s.date && s.time) {
+              return { date: s.date, time: s.time, isBooked: !!s.isBooked };
+            }
+            return null;
+          }).filter(Boolean);
+        }
+      }
+    } catch (parseErr) {
+      console.error("Data parse error in updateService:", parseErr);
+      return res.status(400).json({ success: false, message: "Invalid data format for instructions or slots" });
+    }
 
     const service = await Service.findByIdAndUpdate(req.params.id, updates, { new: true });
     if (!service) return res.status(404).json({ success: false, message: "Service not found" });
-    return res.status(200).json({ success: true, message: "Service updated", service });
+    return res.status(200).json({ success: true, message: "Service updated successfully", service });
   } catch (err) {
-    return res.status(500).json({ success: false, message: "Server error" });
+    console.error("updateService error:", err);
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
