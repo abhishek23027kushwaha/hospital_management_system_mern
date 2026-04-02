@@ -154,7 +154,7 @@ const Services = () => {
         <div className="max-w-[1200px] mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-              Why Choose <span className="text-emerald-600">MediCare</span> Diagnostics?
+              Why Choose <span className="text-green-500">MediCare</span> Diagnostics?
             </h2>
             <p className="text-gray-500 text-sm mt-2">We combine technology with compassion for accurate results you can trust.</p>
           </div>
@@ -162,9 +162,9 @@ const Services = () => {
             {highlights.map((h, i) => (
               <div
                 key={i}
-                className="flex flex-col items-center text-center gap-4 p-6 rounded-2xl bg-emerald-50 hover:bg-emerald-100 transition-colors duration-200 border border-emerald-100"
+                className="flex flex-col items-center text-center gap-4 p-6 rounded-2xl bg-[#ecfdf5] hover:bg-[#d1fae5] transition-colors duration-200 border border-emerald-100"
               >
-                <div className="w-14 h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-200">
+                <div className="w-14 h-14 rounded-full bg-green-500 text-white flex items-center justify-center shadow-md shadow-green-200">
                   {h.icon}
                 </div>
                 <div>
@@ -178,7 +178,7 @@ const Services = () => {
       </section>
 
       {/* ── CTA Banner ───────────────────────────────────────── */}
-      <section
+      {/* <section
         className="py-14 px-6 text-center"
         style={{ background: "linear-gradient(135deg, #10b981 0%, #0d9488 100%)" }}
       >
@@ -202,7 +202,7 @@ const Services = () => {
             </Link>
           </div>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 };
