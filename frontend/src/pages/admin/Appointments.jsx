@@ -1,12 +1,8 @@
-import { useState } from 'react';
-import { CalendarCheck, Search, CheckCircle2, XCircle } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Search, CheckCircle2, XCircle, Loader2, RefreshCw } from 'lucide-react';
+import axios from 'axios';
 
-const SAMPLE = [
-  { id: 1, patient: 'Harshit Jaiswal',    doctor: 'Dr. Aisha Patel',  date: '22 Jan 2026', time: '10:00 AM', fee: 1200, status: 'Completed' },
-  { id: 2, patient: 'Priya Singh',         doctor: 'Dr. Rahul Verma', date: '22 Jan 2026', time: '11:30 AM', fee: 1500, status: 'Pending'   },
-  { id: 3, patient: 'Mohit Sharma',        doctor: 'Dr. Priya Sharma', date: '21 Jan 2026', time: '3:00 PM',  fee: 800,  status: 'Cancelled' },
-  { id: 4, patient: 'Suman Yadav',         doctor: 'Dr. Suresh Kumar', date: '20 Jan 2026', time: '9:00 AM',  fee: 1000, status: 'Pending'   },
-];
+const API_BASE = 'http://localhost:8000/api/admin';
 
 const statusColor = {
   Completed: { bg: '#d1fae5', color: '#16a34a' },
@@ -15,16 +11,48 @@ const statusColor = {
 };
 
 export default function Appointments() {
-  const [appointments, setAppointments] = useState(SAMPLE);
+  const [appointments, setAppointments] = useState([]);
+  const [stats, setStats] = useState({ total: 0, completed: 0, pending: 0, cancelled: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
 
-  const filtered = appointments.filter(a =>
-    a.patient.toLowerCase().includes(search.toLowerCase()) ||
-    a.doctor.toLowerCase().includes(search.toLowerCase())
-  );
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${API_BASE}/appointments`, { withCredentials: true });
+      if (data.success) {
+        setAppointments(data.appointments);
+        setStats(data.stats);
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to load appointments');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const changeStatus = (id, status) =>
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const changeStatus = async (id, type, status) => {
+    try {
+      const { data } = await axios.put(`${API_BASE}/appointments/${type}/${id}/status`, { status }, { withCredentials: true });
+      if (data.success) {
+        fetchData();
+      }
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to update status');
+    }
+  };
+
+  const filtered = appointments.filter(a => {
+    const pName = a.patient?.name || '';
+    const dName = a.doctor?.name || a.service?.name || '';
+    return pName.toLowerCase().includes(search.toLowerCase()) || 
+           dName.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <div style={{ padding: '28px 32px', fontFamily: "'Inter','Segoe UI',sans-serif" }}>
@@ -34,10 +62,10 @@ export default function Appointments() {
       {/* Stats Row */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Total', val: appointments.length, bg: '#f0fdf4', color: '#16a34a' },
-          { label: 'Completed', val: appointments.filter(a => a.status === 'Completed').length, bg: '#d1fae5', color: '#16a34a' },
-          { label: 'Pending',   val: appointments.filter(a => a.status === 'Pending').length,   bg: '#fef9c3', color: '#ca8a04' },
-          { label: 'Cancelled', val: appointments.filter(a => a.status === 'Cancelled').length, bg: '#fee2e2', color: '#dc2626' },
+          { label: 'Total', val: stats.total, bg: '#f0fdf4', color: '#16a34a' },
+          { label: 'Completed', val: stats.completed, bg: '#d1fae5', color: '#16a34a' },
+          { label: 'Pending',   val: stats.pending,   bg: '#fef9c3', color: '#ca8a04' },
+          { label: 'Cancelled', val: stats.cancelled, bg: '#fee2e2', color: '#dc2626' },
         ].map(s => (
           <div key={s.label} style={{ background: s.bg, borderRadius: 12, padding: '12px 20px', textAlign: 'center', minWidth: 90 }}>
             <p style={{ fontSize: 22, fontWeight: 900, color: s.color, margin: 0 }}>{s.val}</p>
@@ -66,15 +94,24 @@ export default function Appointments() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {loading ? (
+              <tr><td colSpan={8} style={{ padding: 60, textAlign: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                  <Loader2 className="animate-spin" size={24} color="#0d9488" />
+                  <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 500 }}>Fetching appointments...</span>
+                </div>
+              </td></tr>
+            ) : error ? (
+              <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#dc2626' }}>{error}</td></tr>
+            ) : filtered.length === 0 ? (
               <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>No appointments found</td></tr>
             ) : filtered.map((a, i) => {
-              const sc = statusColor[a.status];
+              const sc = statusColor[a.status] || statusColor.Pending;
               return (
-                <tr key={a.id} style={{ borderTop: '1px solid #f3f4f6' }}>
+                <tr key={a._id} style={{ borderTop: '1px solid #f3f4f6' }}>
                   <td style={{ padding: '12px 14px', fontSize: 13, color: '#9ca3af' }}>{i + 1}</td>
-                  <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 600, color: '#111827' }}>{a.patient}</td>
-                  <td style={{ padding: '12px 14px', fontSize: 13, color: '#374151' }}>{a.doctor}</td>
+                  <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 600, color: '#111827' }}>{a.patient?.name || 'User'}</td>
+                  <td style={{ padding: '12px 14px', fontSize: 13, color: '#374151' }}>{a.doctor?.name || a.service?.name}</td>
                   <td style={{ padding: '12px 14px', fontSize: 13, color: '#374151' }}>{a.date}</td>
                   <td style={{ padding: '12px 14px', fontSize: 13, color: '#374151' }}>{a.time}</td>
                   <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 600 }}>₹{a.fee}</td>
@@ -83,12 +120,18 @@ export default function Appointments() {
                   </td>
                   <td style={{ padding: '12px 14px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => changeStatus(a.id, 'Completed')} style={{ background: '#d1fae5', border: 'none', borderRadius: 8, padding: '5px 8px', cursor: 'pointer', color: '#16a34a', display: 'flex', alignItems: 'center' }}>
-                        <CheckCircle2 size={14} />
-                      </button>
-                      <button onClick={() => changeStatus(a.id, 'Cancelled')} style={{ background: '#fee2e2', border: 'none', borderRadius: 8, padding: '5px 8px', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center' }}>
-                        <XCircle size={14} />
-                      </button>
+                      {a.status === 'Pending' ? (
+                        <>
+                          <button onClick={() => changeStatus(a._id, a.type, 'Completed')} style={{ background: '#d1fae5', border: 'none', borderRadius: 8, padding: '5px 8px', cursor: 'pointer', color: '#16a34a', display: 'flex', alignItems: 'center' }}>
+                            <CheckCircle2 size={14} />
+                          </button>
+                          <button onClick={() => changeStatus(a._id, a.type, 'Cancelled')} style={{ background: '#fee2e2', border: 'none', borderRadius: 8, padding: '5px 8px', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center' }}>
+                            <XCircle size={14} />
+                          </button>
+                        </>
+                      ) : (
+                        <span style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>No actions</span>
+                      )}
                     </div>
                   </td>
                 </tr>
