@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Star, Clock, ChevronRight } from 'lucide-react';
 
-const DoctorCard = ({ name, speciality, specialization, experience, image, rating }) => {
+const DoctorCard = ({ _id, name, speciality, specialization, experience, image, rating }) => {
   const displaySpeciality = speciality || specialization || "Medical Specialist";
   const displayRating = typeof rating === 'number' ? rating.toFixed(1) : "4.9";
 
@@ -41,7 +41,13 @@ const DoctorCard = ({ name, speciality, specialization, experience, image, ratin
       </div>
 
       {/* Book Button */}
-      <button className="w-full bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white py-3 rounded-xl font-black flex items-center justify-center gap-1.5 shadow-md shadow-green-500/20 hover:shadow-green-500/40 transition-all active:scale-95 mt-auto">
+      <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          window.location.href = `/book-appointment/${_id || ""}`;
+        }}
+        className="w-full bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white py-3 rounded-xl font-black flex items-center justify-center gap-1.5 shadow-md shadow-green-500/20 hover:shadow-green-500/40 transition-all active:scale-95 mt-auto"
+      >
         <ChevronRight size={16} />
         Book Now
       </button>

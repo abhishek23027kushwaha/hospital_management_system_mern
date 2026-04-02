@@ -1,456 +1,536 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useSelector } from 'react-redux';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ArrowLeft, Star, Heart, GraduationCap, MapPin, 
+  Wallet, CheckCircle, Info, Calendar, Clock, 
+  UserPlus, ShieldCheck, Award, MessageSquare, Loader,
+  Phone, User, Mail, ChevronRight
+} from 'lucide-react';
 
-/* ─── Data ───────────────────────────────────────────────── */
-const doctors = [
-  { name: "Dr. Rahul Sharma",    specialty: "Cardiologist" },
-  { name: "Dr. Sarah Chen",      specialty: "Neurologist" },
-  { name: "Dr. Emily Rodriguez", specialty: "Pediatrician" },
-  { name: "Dr. Michael Bond",    specialty: "Surgeon" },
-  { name: "Dr. David Kim",       specialty: "Oncologist" },
-  { name: "Dr. Lisa Wong",       specialty: "Dermatologist" },
-  { name: "Dr. James Wilson",    specialty: "Dentist" },
-  { name: "Dr. Kabir Malhotra",  specialty: "Nephrologist" },
-  { name: "Dr. Priya Nair",      specialty: "Gynecologist" },
-  { name: "Dr. Arjun Mehta",     specialty: "Orthopedist" },
-];
-
-const services = [
-  "Full Body Health Checkup",
-  "Blood Pressure Check",
-  "Blood Sugar Test",
-  "X-Ray Scan",
-  "Full Blood Count",
-  "Vaccination",
-  "General Consultation",
-  "Dental Checkup",
-];
-
-const timeSlots = [
-  "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
-  "11:00 AM", "11:30 AM", "12:00 PM", "02:00 PM",
-  "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM",
-  "04:30 PM", "05:00 PM",
-];
-
-/* ─── Step Indicator ─────────────────────────────────────── */
-function StepIndicator({ currentStep }) {
-  const steps = [
-    { num: 1, label: "Patient Info" },
-    { num: 2, label: "Doctor & Service" },
-    { num: 3, label: "Date & Time" },
-  ];
-  return (
-    <div className="flex items-center justify-center gap-0 mb-10">
-      {steps.map((step, i) => (
-        <div key={step.num} className="flex items-center">
-          <div className="flex flex-col items-center gap-1">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
-                currentStep >= step.num
-                  ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200"
-                  : "bg-gray-100 text-gray-400"
-              }`}
-            >
-              {currentStep > step.num ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              ) : (
-                step.num
-              )}
-            </div>
-            <span className={`text-xs font-medium whitespace-nowrap ${currentStep >= step.num ? "text-emerald-600" : "text-gray-400"}`}>
-              {step.label}
-            </span>
-          </div>
-          {i < steps.length - 1 && (
-            <div className={`w-20 sm:w-28 h-0.5 mx-2 mb-4 transition-all duration-500 ${currentStep > step.num ? "bg-emerald-400" : "bg-gray-200"}`} />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
+const API_BASE = 'http://localhost:8000/api';
 
 /* ─── Success Screen ─────────────────────────────────────── */
 function SuccessScreen({ data, onReset }) {
+  const isCash = data.paymentMethod === 'Cash';
+
   return (
-    <div className="flex flex-col items-center text-center gap-6 py-8 px-4">
-      <div className="w-24 h-24 rounded-full bg-emerald-100 flex items-center justify-center">
-        <svg className="w-12 h-12 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.9 }} 
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center text-center gap-6 py-12 px-6 bg-white rounded-[40px] shadow-2xl border border-emerald-50"
+    >
+      <div className="w-28 h-28 rounded-full bg-emerald-100 flex items-center justify-center relative">
+        <motion.div 
+          initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring' }}
+          className="absolute inset-0 bg-emerald-400/20 rounded-full animate-ping" 
+        />
+        <CheckCircle className="w-14 h-14 text-emerald-500 relative z-10" />
       </div>
       <div>
-        <h2 className="text-2xl font-bold text-gray-800">Appointment Booked!</h2>
-        <p className="text-gray-500 text-sm mt-2 max-w-sm">
-          Your appointment has been successfully scheduled. A confirmation will be sent to <strong>{data.email}</strong>.
+        <h2 className="text-3xl font-black text-gray-800 tracking-tight">
+          {isCash ? "Booking Pre-Confirmed!" : "Appointment Confirmed!"}
+        </h2>
+        <p className="text-gray-500 text-sm mt-3 max-w-sm leading-relaxed">
+          {isCash 
+            ? `Your appointment with Dr. ${data.doctorName} is registered. Please pay ₹${data.fee} at the clinic.`
+            : `Your session with Dr. ${data.doctorName} is all set. We've sent the details to your email.`
+          }
         </p>
       </div>
 
-      {/* Summary Card */}
-      <div className="w-full max-w-sm bg-emerald-50 rounded-2xl p-5 text-left space-y-3 border border-emerald-100">
+      <div className="w-full max-w-sm bg-gray-50 rounded-3xl p-6 text-left space-y-3 border border-gray-100">
         {[
-          { label: "Patient", value: data.name },
-          { label: "Doctor",  value: data.doctor },
-          { label: "Service", value: data.service },
-          {
-            label: "Date",
-            value: data.date
-              ? new Date(data.date).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
-              : "",
-          },
-          { label: "Time", value: data.timeSlot },
-        ].map(({ label, value }) => (
-          <div key={label} className="flex justify-between text-sm">
-            <span className="text-gray-500 font-medium">{label}</span>
-            <span className="text-gray-800 font-semibold text-right max-w-[60%]">{value}</span>
+          { label: "Patient", value: data.name, icon: <UserPlus size={14} className="text-emerald-500" /> },
+          { label: "Date", value: data.date, icon: <Calendar size={14} className="text-emerald-500" /> },
+          { label: "Time", value: data.timeSlot, icon: <Clock size={14} className="text-emerald-500" /> },
+          { label: "Payment", value: data.paymentMethod, icon: <Wallet size={14} className="text-emerald-500" /> },
+        ].map(({ label, value, icon }) => (
+          <div key={label} className="flex justify-between items-center bg-white p-3 rounded-2xl border border-gray-50 shadow-sm">
+            <div className="flex items-center gap-2">
+              {icon}
+              <span className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">{label}</span>
+            </div>
+            <span className="text-gray-800 font-bold text-sm">{value}</span>
           </div>
         ))}
       </div>
 
       <button
         onClick={onReset}
-        className="px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-full text-sm transition-colors shadow-md shadow-emerald-200"
+        className="mt-4 px-10 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-full text-sm transition-all shadow-xl shadow-emerald-200 active:scale-95"
       >
         Book Another Appointment
       </button>
-    </div>
+    </motion.div>
   );
 }
 
 /* ─── Main Page ──────────────────────────────────────────── */
 const Appointments = () => {
-  const [step, setStep] = useState(1);
+  const { doctorId } = useParams();
+  const navigate = useNavigate();
+  const { user: currentUser } = useSelector(state => state.user);
+
+  const [loading, setLoading] = useState(false);
+  const [fetchingDoc, setFetchingDoc] = useState(!!doctorId);
+  const [doctorList, setDoctorList] = useState([]);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [availableDates, setAvailableDates] = useState([]);
+  
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
-    name: "", phone: "", email: "", age: "", gender: "",
-    doctor: "", service: "", message: "", date: "", timeSlot: "",
+    name: currentUser?.name || "",
+    phone: currentUser?.phone || "",
+    email: currentUser?.email || "",
+    age: currentUser?.age || "",
+    gender: currentUser?.gender || "",
+    doctorId: doctorId || "",
+    doctorName: "",
+    service: "General Consultation",
+    message: "",
+    date: "",
+    timeSlot: "",
+    slotId: "",
+    paymentMethod: "Online", // Default
   });
 
-  const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+  const [error, setError] = useState("");
 
-  const canNext1  = form.name && form.phone && form.email;
-  const canNext2  = form.doctor && form.service;
-  const canSubmit = form.date && form.timeSlot;
+  useEffect(() => {
+    if (currentUser) {
+      setForm(prev => ({
+        ...prev,
+        name: currentUser.name || prev.name,
+        phone: currentUser.phone || prev.phone,
+        email: currentUser.email || prev.email,
+        age: currentUser.age || prev.age,
+        gender: currentUser.gender || prev.gender
+      }));
+    }
+  }, [currentUser]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmitted(true);
+  const isFormComplete = !!(currentUser && form.name && form.age && form.phone && form.date && form.timeSlot);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const { data } = await axios.get(`${API_BASE}/doctor/all?available=true`);
+        if (data.success) {
+          setDoctorList(data.doctors);
+          if (doctorId) {
+            const doc = data.doctors.find(d => d._id === doctorId);
+            if (doc) {
+              setSelectedDoctor(doc);
+              setForm(prev => ({ ...prev, doctorName: doc.name, doctorId: doc._id }));
+              processSlots(doc.slots);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setFetchingDoc(false);
+      }
+    };
+    fetchDoctors();
+  }, [doctorId]);
+
+  useEffect(() => {
+    if (form.doctorId && doctorList.length > 0) {
+      const doc = doctorList.find(d => d._id === form.doctorId);
+      if (doc) {
+        setSelectedDoctor(doc);
+        setForm(prev => ({ ...prev, doctorName: doc.name }));
+        processSlots(doc.slots);
+      }
+    }
+  }, [form.doctorId, doctorList]);
+
+  const processSlots = (slots) => {
+    if (!slots) return;
+    const unbooked = slots.filter(s => !s.isBooked);
+    const dates = [...new Set(unbooked.map(s => s.date))].sort();
+    setAvailableDates(dates);
+    setAvailableSlots(unbooked);
   };
 
-  const resetForm = () => {
-    setForm({ name: "", phone: "", email: "", age: "", gender: "", doctor: "", service: "", message: "", date: "", timeSlot: "" });
-    setStep(1);
-    setSubmitted(false);
+  const update = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    setError("");
   };
 
-  const today = new Date().toISOString().split("T")[0];
+  const handleDateChange = (date) => {
+    update("date", date);
+    update("timeSlot", "");
+    update("slotId", "");
+  };
+
+  const handleSlotSelection = (slot) => {
+    update("timeSlot", slot.time);
+    update("slotId", slot._id);
+  };
+
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!currentUser) return navigate('/login');
+    
+    // Basic Validation
+    if (!form.name || !form.phone || !form.date || !form.timeSlot) {
+      setError("Please fill all required fields and select a slot.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const { data } = await axios.post(`${API_BASE}/appointments/book`, form, { withCredentials: true });
+      
+      if (data.success) {
+        if (form.paymentMethod === 'Cash') {
+          setSubmitted(true);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          // Razorpay flow
+          const { order, appointment } = data;
+          const options = {
+            key: "rzp_test_SUNI6vBIXNlZ8U",
+            amount: order.amount,
+            currency: order.currency,
+            name: "MediCare Hospital",
+            description: `Appointment with ${form.doctorName}`,
+            order_id: order.id,
+            handler: async (response) => {
+              try {
+                const verifyRes = await axios.post(`${API_BASE}/appointments/verify-payment`, {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  appointmentId: appointment._id
+                }, { withCredentials: true });
+
+                if (verifyRes.data.success) {
+                  setSubmitted(true);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              } catch (err) {
+                setError("Payment verification failed. Please contact support.");
+              }
+            },
+            prefill: { name: form.name, email: form.email, contact: form.phone },
+            theme: { color: "#10b981" }
+          };
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        }
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || "Booking failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetchingDoc) return <div className="h-screen flex items-center justify-center text-emerald-600 font-bold animate-pulse text-lg tracking-widest uppercase">Initializing Physician Profile...</div>;
+
+  if (!selectedDoctor) return (
+    <div className="h-screen flex flex-col items-center justify-center gap-4 bg-emerald-50">
+      <p className="text-gray-500 font-medium">Please select a doctor to continue.</p>
+      <Link to="/doctors" className="px-6 py-2 bg-emerald-500 text-white rounded-full font-bold">Go to Doctors</Link>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-
-      {/* ── Hero ──────────────────────────────────────────── */}
-      <section
-        className="relative py-14 px-6 text-center overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%)" }}
-      >
-        <div className="absolute -top-16 -left-16 w-56 h-56 bg-emerald-300/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -right-16 w-56 h-56 bg-teal-300/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative max-w-xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/60 backdrop-blur rounded-full text-emerald-700 text-xs font-semibold border border-emerald-200">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            Available 7 days a week
+    <div className="min-h-screen bg-[#f8fffd] pb-20">
+      
+      {/* ── Header ─────────────────────────────────────────── */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-emerald-50 px-6 py-4 flex items-center justify-between">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 group">
+          <div className="p-2.5 rounded-2xl border border-emerald-100 bg-white shadow-sm group-hover:bg-emerald-50 transition-all">
+            <ArrowLeft size={18} className="text-emerald-600" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-emerald-900">Book an Appointment</h1>
-          <p className="text-emerald-700 text-sm md:text-base">
-            Schedule your visit in just 3 simple steps. Fast, easy, and hassle-free.
-          </p>
+          <span className="text-emerald-700 font-black text-sm uppercase tracking-wider">Back</span>
+        </button>
+        <h2 className="text-emerald-900 font-black text-xl tracking-tight hidden sm:block">Doctor Profile</h2>
+        <div className="flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-2xl border border-amber-100 shadow-sm">
+          <Star size={16} fill="#f59e0b" className="text-amber-500" />
+          <span className="text-amber-700 font-black text-sm">{selectedDoctor.rating || '4.8'}</span>
         </div>
-      </section>
+      </nav>
 
-      {/* ── Form + Sidebar ────────────────────────────────── */}
-      <section className="flex-1 py-12 px-4 bg-emerald-50/30">
-        <div className="max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
-
-          {/* ─ Form Card ─ */}
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-            {submitted ? (
-              <SuccessScreen data={form} onReset={resetForm} />
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <StepIndicator currentStep={step} />
-
-                {/* ── Step 1: Patient Info ── */}
-                {step === 1 && (
-                  <div className="space-y-5">
-                    <h2 className="text-lg font-bold text-gray-800 border-l-4 border-emerald-400 pl-3">Patient Information</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="sm:col-span-2">
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Full Name *</label>
-                        <input
-                          type="text" placeholder="e.g. Rahul Sharma"
-                          value={form.name} onChange={(e) => update("name", e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all placeholder-gray-300"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Phone Number *</label>
-                        <input
-                          type="tel" placeholder="+91 XXXXX XXXXX"
-                          value={form.phone} onChange={(e) => update("phone", e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all placeholder-gray-300"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Email Address *</label>
-                        <input
-                          type="email" placeholder="you@email.com"
-                          value={form.email} onChange={(e) => update("email", e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all placeholder-gray-300"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Age</label>
-                        <input
-                          type="number" placeholder="e.g. 28" min={1} max={120}
-                          value={form.age} onChange={(e) => update("age", e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all placeholder-gray-300"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Gender</label>
-                        <select
-                          value={form.gender} onChange={(e) => update("gender", e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all bg-white"
-                        >
-                          <option value="">Select gender</option>
-                          <option>Male</option>
-                          <option>Female</option>
-                          <option>Other</option>
-                          <option>Prefer not to say</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="flex justify-end pt-2">
-                      <button
-                        type="button" disabled={!canNext1} onClick={() => setStep(2)}
-                        className="px-8 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold rounded-full text-sm transition-all flex items-center gap-2"
-                      >
-                        Next
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Step 2: Doctor & Service ── */}
-                {step === 2 && (
-                  <div className="space-y-5">
-                    <h2 className="text-lg font-bold text-gray-800 border-l-4 border-emerald-400 pl-3">Doctor &amp; Service</h2>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">Select Doctor *</label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
-                        {doctors.map((doc) => (
-                          <button
-                            key={doc.name} type="button"
-                            onClick={() => update("doctor", doc.name)}
-                            className={`text-left px-4 py-3 rounded-xl border text-sm transition-all duration-200 ${
-                              form.doctor === doc.name
-                                ? "border-emerald-400 bg-emerald-50 text-emerald-700"
-                                : "border-gray-200 hover:border-emerald-300 text-gray-700"
-                            }`}
-                          >
-                            <p className="font-semibold text-[13px]">{doc.name}</p>
-                            <p className={`text-xs mt-0.5 ${form.doctor === doc.name ? "text-emerald-500" : "text-gray-400"}`}>{doc.specialty}</p>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">Select Service *</label>
-                      <div className="flex flex-wrap gap-2">
-                        {services.map((svc) => (
-                          <button
-                            key={svc} type="button"
-                            onClick={() => update("service", svc)}
-                            className={`px-4 py-2 rounded-full text-xs font-medium border transition-all duration-200 ${
-                              form.service === svc
-                                ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-200"
-                                : "border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-600"
-                            }`}
-                          >
-                            {svc}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1.5">Additional Notes (optional)</label>
-                      <textarea
-                        rows={3} placeholder="Describe your symptoms or reason for visit..."
-                        value={form.message} onChange={(e) => update("message", e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all resize-none placeholder-gray-300"
+      {submitted ? (
+        <div className="max-w-2xl mx-auto mt-20 px-6">
+          <SuccessScreen data={{...form, fee: selectedDoctor.fee}} onReset={() => window.location.reload()} />
+        </div>
+      ) : (
+        <div className="max-w-[1300px] mx-auto pt-10 px-6">
+          
+          {/* ── Doctor Info Card ──────────────────────────────── */}
+          <div className="bg-[#f0fcf9] rounded-[50px] shadow-2xl shadow-emerald-900/[0.05] border border-emerald-100/50 p-8 md:p-10 relative overflow-hidden mb-12">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-100 rounded-full blur-[120px] -mr-48 -mt-48 pointer-events-none opacity-40" />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-12 relative z-10">
+              <div className="flex flex-col items-center gap-8">
+                <div className="relative">
+                  <div className="w-[260px] h-[260px] rounded-full p-1 bg-gradient-to-br from-emerald-400/50 to-teal-500/50">
+                    <div className="w-full h-full rounded-full border-[6px] border-white overflow-hidden shadow-2xl shadow-emerald-900/10">
+                      <img 
+                        src={selectedDoctor.image || 'https://via.placeholder.com/300'} 
+                        alt={selectedDoctor.name} 
+                        className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="flex justify-between pt-2">
-                      <button type="button" onClick={() => setStep(1)}
-                        className="px-6 py-3 border border-gray-200 text-gray-600 hover:border-gray-400 font-semibold rounded-full text-sm transition-all flex items-center gap-2"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Back
-                      </button>
-                      <button type="button" disabled={!canNext2} onClick={() => setStep(3)}
-                        className="px-8 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold rounded-full text-sm transition-all flex items-center gap-2"
-                      >
-                        Next
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    </div>
                   </div>
-                )}
-
-                {/* ── Step 3: Date & Time ── */}
-                {step === 3 && (
-                  <div className="space-y-5">
-                    <h2 className="text-lg font-bold text-gray-800 border-l-4 border-emerald-400 pl-3">Date &amp; Time Slot</h2>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1.5">Appointment Date *</label>
-                      <input
-                        type="date" min={today}
-                        value={form.date} onChange={(e) => update("date", e.target.value)}
-                        className="w-full sm:w-64 px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">Select Time Slot *</label>
-                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {timeSlots.map((slot) => (
-                          <button
-                            key={slot} type="button"
-                            onClick={() => update("timeSlot", slot)}
-                            className={`py-2.5 rounded-xl text-xs font-semibold border transition-all duration-200 ${
-                              form.timeSlot === slot
-                                ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-200"
-                                : "border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50"
-                            }`}
-                          >
-                            {slot}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Summary preview */}
-                    {(form.date || form.timeSlot) && (
-                      <div className="bg-emerald-50 rounded-xl p-4 text-sm space-y-1 border border-emerald-100">
-                        <p className="font-bold text-emerald-700 text-xs uppercase tracking-wide mb-2">Booking Summary</p>
-                        {form.doctor  && <p className="text-gray-600"><span className="font-semibold">Doctor:</span> {form.doctor}</p>}
-                        {form.service && <p className="text-gray-600"><span className="font-semibold">Service:</span> {form.service}</p>}
-                        {form.date    && <p className="text-gray-600"><span className="font-semibold">Date:</span> {new Date(form.date).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>}
-                        {form.timeSlot && <p className="text-gray-600"><span className="font-semibold">Time:</span> {form.timeSlot}</p>}
-                      </div>
-                    )}
-
-                    <div className="flex justify-between pt-2">
-                      <button type="button" onClick={() => setStep(2)}
-                        className="px-6 py-3 border border-gray-200 text-gray-600 hover:border-gray-400 font-semibold rounded-full text-sm transition-all flex items-center gap-2"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Back
-                      </button>
-                      <button type="submit" disabled={!canSubmit}
-                        className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 text-white font-bold rounded-full text-sm transition-all shadow-lg shadow-emerald-200 flex items-center gap-2"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Confirm Booking
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </form>
-            )}
-          </div>
-
-          {/* ─ Info Sidebar ─ */}
-          <div className="flex flex-col gap-5 h-fit">
-            {/* Why Book Card */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4">
-              <h3 className="font-bold text-gray-800 text-sm">Why Book With Us?</h3>
-              {[
-                { icon: "🕐", title: "Flexible Timings",  desc: "Morning to evening slots, 7 days a week" },
-                { icon: "👨‍⚕️", title: "Verified Doctors",  desc: "All specialists are board-certified" },
-                { icon: "📋", title: "Digital Records",   desc: "Your reports stored securely online" },
-                { icon: "🔔", title: "Reminders",         desc: "SMS & email reminders before appointment" },
-              ].map(({ icon, title, desc }) => (
-                <div key={title} className="flex items-start gap-3">
-                  <span className="text-xl mt-0.5">{icon}</span>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-800">{title}</p>
-                    <p className="text-xs text-gray-400">{desc}</p>
-                  </div>
+                  <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 4, repeat: Infinity }} className="absolute -inset-4 border-[2px] border-emerald-300/30 rounded-full pointer-events-none" />
                 </div>
-              ))}
-            </div>
-
-            {/* Emergency Card */}
-            <div
-              className="rounded-3xl p-6 space-y-3 text-white"
-              style={{ background: "linear-gradient(135deg, #10b981, #0d9488)" }}
-            >
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <h3 className="font-bold text-sm">Emergency?</h3>
+                
+                <div className="grid grid-cols-3 gap-3 w-full">
+                  {[
+                    { label: 'Success', value: selectedDoctor.success ? `${selectedDoctor.success}%` : '98%', icon: <Heart size={16} />, color: 'emerald' },
+                    { label: 'Exp', value: `${selectedDoctor.experience || 5}Y`, icon: <Award size={16} />, color: 'amber' },
+                    { label: 'Patients', value: selectedDoctor.patients || '500+', icon: <UserPlus size={16} />, color: 'blue' },
+                  ].map((s, i) => (
+                    <div key={i} className="bg-white rounded-2xl flex flex-col items-center gap-1.5 p-3 shadow-lg shadow-emerald-900/[0.03] border border-white">
+                      <div className={`p-1.5 rounded-lg bg-${s.color}-50 text-${s.color}-500 flex items-center justify-center`}>{s.icon}</div>
+                      <p className="text-sm font-black text-gray-900 leading-none">{s.value}</p>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <p className="text-emerald-100 text-xs leading-relaxed">
-                For medical emergencies, please call our 24/7 helpline immediately.
-              </p>
-              <a
-                href="tel:+918299431275"
-                className="flex items-center gap-2 bg-white/20 hover:bg-white/30 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                +91 82994 31275
-              </a>
-            </div>
 
-            {/* Working Hours Card */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-3">
-              <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">
-                <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                </svg>
-                Working Hours
-              </h3>
-              {[
-                { day: "Mon – Fri",  time: "9:00 AM – 6:00 PM" },
-                { day: "Saturday",  time: "9:00 AM – 4:00 PM" },
-                { day: "Sunday",    time: "10:00 AM – 2:00 PM" },
-              ].map(({ day, time }) => (
-                <div key={day} className="flex justify-between text-xs">
-                  <span className="text-gray-500 font-medium">{day}</span>
-                  <span className="text-gray-800 font-semibold">{time}</span>
+              <div className="flex flex-col gap-6 text-left">
+                <div>
+                  <h1 className="text-4xl md:text-5xl font-black text-emerald-900 tracking-tight mb-2">Dr. {selectedDoctor.name}</h1>
+                  <span className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-2 rounded-2xl text-[13px] font-black shadow-lg shadow-emerald-100">
+                    <Heart size={14} fill="currentColor" />
+                    {selectedDoctor.specialization}
+                  </span>
                 </div>
-              ))}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { label: 'Qualifications', value: selectedDoctor.qualifications || 'MBBS, MD', icon: <GraduationCap size={18} /> },
+                    { label: 'Location', value: selectedDoctor.location || 'Mumbai, India', icon: <MapPin size={18} /> },
+                    { label: 'Consultation Fee', value: `₹${selectedDoctor.fee}`, icon: <Wallet size={18} />, textStyle: 'text-rose-500 font-black' },
+                    { label: 'Availability', value: selectedDoctor.available ? 'Available' : 'On Leave', icon: <CheckCircle size={18} />, textStyle: 'text-emerald-600 font-black' },
+                  ].map((info, i) => (
+                    <div key={i} className="flex items-center gap-4 bg-[#f0fcf9] border border-emerald-100/50 p-4 rounded-3xl shadow-sm">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100/50 flex items-center justify-center text-emerald-700 shrink-0">{info.icon}</div>
+                      <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">{info.label}</p>
+                        <p className={`text-[13px] font-black text-emerald-900 ${info.textStyle || ''}`}>{info.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-[#dcfce7] rounded-[32px] p-6 border border-emerald-200/50">
+                  <p className="text-emerald-900 text-sm leading-relaxed font-bold">
+                    <Info className="inline mr-2 text-emerald-600" size={16} />
+                    {selectedDoctor.about || 'A highly dedicated medical professional with extensive experience in providing comprehensive patient care and innovative treatment solutions...'}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* ── Booking & Patient Details Section ────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8">
+            
+            <div className="space-y-8">
+              {/* 1. Date Selection */}
+              <div className="bg-[#f0fcf9] rounded-[40px] p-8 shadow-xl shadow-emerald-900/[0.03] border border-emerald-100/50">
+                <h3 className="text-xl font-black text-emerald-900 flex items-center gap-3 mb-8">
+                  <Calendar size={22} className="text-emerald-500" />
+                  Select Date
+                </h3>
+                <div className="flex flex-wrap gap-4">
+                  {availableDates.length > 0 ? (
+                    availableDates.map((date) => {
+                      const d = new Date(date);
+                      const day = d.toLocaleDateString('en-GB', { weekday: 'short' });
+                      const num = d.toLocaleDateString('en-GB', { day: 'numeric' });
+                      const mon = d.toLocaleDateString('en-GB', { month: 'short' });
+                      
+                      return (
+                        <button
+                          key={date} type="button"
+                          onClick={() => handleDateChange(date)}
+                          className={`w-20 h-24 rounded-full flex flex-col items-center justify-center gap-1 border-2 transition-all duration-300 ${
+                            form.date === date
+                              ? "bg-emerald-500 border-emerald-500 text-white shadow-xl shadow-emerald-200"
+                              : "bg-white border-gray-100 text-gray-500 hover:border-emerald-200"
+                          }`}
+                        >
+                          <span className={`text-[10px] font-bold uppercase ${form.date === date ? 'text-emerald-100' : 'text-gray-400'}`}>{day}</span>
+                          <span className="text-xl font-black">{num}</span>
+                          <span className={`text-[10px] font-bold uppercase ${form.date === date ? 'text-emerald-100' : 'text-gray-400'}`}>{mon}</span>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <p className="text-gray-400 font-bold italic py-4">No slots available currently</p>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. Patient Details Form */}
+              <div className="bg-[#f0fdf9] rounded-[40px] p-8 shadow-xl shadow-emerald-900/[0.03] border border-emerald-100/50">
+                <h3 className="text-xl font-black text-emerald-900 flex items-center gap-3 mb-8">
+                  <UserPlus size={22} className="text-emerald-500" />
+                  Patient Details
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="relative group sm:col-span-1">
+                    <User className="absolute left-4 top-4 text-emerald-300 group-focus-within:text-emerald-600 transition-colors" size={18} />
+                    <input 
+                      type="text" placeholder="Full Name" 
+                      value={form.name} onChange={(e) => update('name', e.target.value)}
+                      className="w-full pl-12 pr-6 py-4 bg-white/60 border-2 border-emerald-50 focus:border-emerald-400 focus:bg-white rounded-2xl outline-none font-bold text-sm text-gray-900 transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="relative group">
+                    <Award className="absolute left-4 top-4 text-emerald-300 group-focus-within:text-emerald-600 transition-colors" size={18} />
+                    <input 
+                      type="number" placeholder="Age" 
+                      value={form.age} onChange={(e) => update('age', e.target.value)}
+                      className="w-full pl-12 pr-6 py-4 bg-white/60 border-2 border-emerald-50 focus:border-emerald-400 focus:bg-white rounded-2xl outline-none font-bold text-sm text-gray-900 transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="relative group">
+                    <Phone className="absolute left-4 top-4 text-emerald-300 group-focus-within:text-emerald-600 transition-colors" size={18} />
+                    <input 
+                      type="tel" placeholder="Mobile Number (10 digits)" 
+                      value={form.phone} onChange={(e) => update('phone', e.target.value)}
+                      className="w-full pl-12 pr-6 py-4 bg-white/60 border-2 border-emerald-50 focus:border-emerald-400 focus:bg-white rounded-2xl outline-none font-bold text-sm text-gray-900 transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="relative group">
+                    <User className="absolute left-4 top-4 text-emerald-300 group-focus-within:text-emerald-600 transition-colors" size={18} />
+                    <select 
+                      value={form.gender} onChange={(e) => update('gender', e.target.value)}
+                      className="w-full pl-12 pr-6 py-4 bg-white/60 border-2 border-emerald-50 focus:border-emerald-400 focus:bg-white rounded-2xl outline-none font-bold text-sm text-gray-900 transition-all appearance-none"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="relative group sm:col-span-2">
+                    <Mail className="absolute left-4 top-4 text-emerald-300 group-focus-within:text-emerald-600 transition-colors" size={18} />
+                    <input 
+                      type="email" placeholder="Email (optional - for receipts)" 
+                      value={form.email} onChange={(e) => update('email', e.target.value)}
+                      className="w-full pl-12 pr-6 py-4 bg-white/60 border-2 border-emerald-50 focus:border-emerald-400 focus:bg-white rounded-2xl outline-none font-bold text-sm text-gray-900 transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Summary & Slot Selection ────────────────────── */}
+            <div className="space-y-6">
+              
+              {/* Slots Section */}
+              <div className="bg-[#f0fcf9] rounded-[40px] p-8 border border-emerald-100/50 shadow-xl shadow-emerald-900/[0.03]">
+                <h3 className="text-lg font-black text-emerald-900 flex items-center gap-3 mb-6">
+                  <Clock size={20} className="text-emerald-500" />
+                  Available Time Slots
+                </h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {form.date ? (
+                    availableSlots
+                      .filter((s) => s.date === form.date)
+                      .map((slot) => (
+                        <button
+                          key={slot._id} type="button"
+                          onClick={() => handleSlotSelection(slot)}
+                          className={`py-3 rounded-xl text-[11px] font-black border-2 transition-all ${
+                            form.timeSlot === slot.time
+                              ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-100"
+                              : "bg-white border-white text-gray-500 hover:border-emerald-200"
+                          }`}
+                        >
+                          {slot.time}
+                        </button>
+                      ))
+                  ) : (
+                    <div className="col-span-3 text-center py-6 text-gray-400 font-bold italic text-sm">Select a date to view slots</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Final Summary Card */}
+              <div className="bg-[#f0fdf9] rounded-[40px] p-8 shadow-2xl border border-emerald-100/50 space-y-6">
+                <h4 className="text-xs font-black text-emerald-600 uppercase tracking-[0.2em] mb-2">Booking Summary</h4>
+                
+                <div className="space-y-4">
+                  {[
+                    { label: 'Patient Name:', value: form.name || 'Not provided', color: form.name ? 'text-emerald-600 italic' : 'text-emerald-400/60' },
+                    { label: 'Patient Age:', value: form.age || 'Not provided', color: form.age ? 'text-emerald-600 italic' : 'text-emerald-400/60' },
+                    { label: 'Patient Phone:', value: form.phone || 'Not provided', color: form.phone ? 'text-emerald-600 italic' : 'text-emerald-400/60' },
+                    { label: 'Selected Doctor:', value: `Dr. ${selectedDoctor.name}`, color: 'text-emerald-900' },
+                    { label: 'Doctor Speciality:', value: selectedDoctor.specialization, color: 'text-emerald-800/80' },
+                    { label: 'Selected Date:', value: form.date || 'Not selected', color: form.date ? 'text-emerald-900' : 'text-emerald-500 font-bold' },
+                    { label: 'Selected Time:', value: form.timeSlot || 'Not selected', color: form.timeSlot ? 'text-emerald-900' : 'text-emerald-500 font-bold' },
+                    { label: 'Consultation Fee:', value: `₹${selectedDoctor.fee}`, color: 'text-rose-500 font-black' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex justify-between items-center text-xs">
+                      <span className="text-emerald-800 font-bold">{item.label}</span>
+                      <span className={`font-black ${item.color || 'text-emerald-900'}`}>{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-6 border-t border-dashed border-gray-100">
+                   <div className="flex items-center justify-between mb-6">
+                    <span className="text-sm font-black text-gray-800">Payment:</span>
+                    <div className="flex bg-gray-50 p-1 rounded-2xl border border-gray-100">
+                      {['Cash', 'Online'].map((method) => (
+                        <button
+                          key={method}
+                          onClick={() => update('paymentMethod', method)}
+                          className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${
+                            form.paymentMethod === method
+                              ? "bg-emerald-600 text-white shadow-lg"
+                              : "text-gray-400 hover:text-gray-600"
+                          }`}
+                        >
+                          {method}
+                        </button>
+                      ))}
+                    </div>
+                   </div>
+
+                   {error && <p className="text-rose-500 text-[11px] font-bold text-center mb-4">{error}</p>}
+
+                   <button 
+                    onClick={handleSubmit} disabled={loading}
+                    className={`w-full py-5 rounded-[24px] font-black text-sm transition-all flex items-center justify-center gap-2 shadow-xl group ${
+                      isFormComplete 
+                        ? "bg-emerald-600 text-white shadow-emerald-200 hover:bg-emerald-700" 
+                        : "bg-gray-200 text-gray-400 shadow-gray-100 cursor-not-allowed"
+                    }`}
+                  >
+                    {loading ? <Loader className="animate-spin" size={20} /> : <ShieldCheck size={20} className={isFormComplete ? "group-hover:scale-110 transition-transform" : ""} />}
+                    Confirm Booking
+                    <ChevronRight size={18} className={`transition-transform ${isFormComplete ? "group-hover:translate-x-1" : ""}`} />
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
         </div>
-      </section>
+      )}
     </div>
   );
 };

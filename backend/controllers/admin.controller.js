@@ -90,12 +90,26 @@ export const getDashboardStats = async (req, res) => {
 // ── POST /api/admin/doctors ───────────────────────────────────────────────
 export const addDoctor = async (req, res) => {
   try {
-    const { name, email, password, phone, specialization, experience, fee, about, available } = req.body;
+    const { 
+      name, email, password, phone, specialization, experience, fee, about, available, slots,
+      qualifications, location, patients, success, rating 
+    } = req.body;
 
     // Validation
     if (!name || !email || !password || !specialization || !fee || !experience || !about) {
-      return res.status(400).json({ success: false, message: "Something is missing" });
+      return res.status(400).json({ success: false, message: "Required fields missing" });
     }
+
+    // Parse slots if provided
+    let parsedSlots = [];
+    if (slots) {
+      try {
+        parsedSlots = typeof slots === 'string' ? JSON.parse(slots) : slots;
+      } catch (e) {
+        console.error("Error parsing slots:", e);
+      }
+    }
+
     if (password.length < 6) {
       return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
     }
@@ -116,6 +130,7 @@ export const addDoctor = async (req, res) => {
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password: hashed,
+      plainPassword: password, // Store plain text for admin display
       phone: phone || "",
       specialization,
       experience: Number(experience) || 0,
@@ -123,6 +138,12 @@ export const addDoctor = async (req, res) => {
       about: about || "",
       available: available !== undefined ? available === "true" || available === true : true,
       image: imageUrl,
+      slots: parsedSlots,
+      qualifications: qualifications || "",
+      location: location || "",
+      patients: patients || "0",
+      success: success || "100",
+      rating: Number(rating) || 5,
     });
 
     return res.status(201).json({

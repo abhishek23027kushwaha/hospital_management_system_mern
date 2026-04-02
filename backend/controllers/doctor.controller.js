@@ -120,13 +120,28 @@ export const addDoctorSlot = async (req, res) => {
     if (!date || !time) {
       return res.status(400).json({ success: false, message: "Date and time are required" });
     }
+
+    // Check if slot already exists
+    const existingDoctor = await Doctor.findById(req.userId);
+    if (!existingDoctor) return res.status(404).json({ success: false, message: "Doctor not found" });
+
+    const isDuplicate = existingDoctor.slots.some(
+      (slot) => slot.date === date && slot.time === time
+    );
+
+    if (isDuplicate) {
+      return res.status(400).json({ success: false, message: "This slot is already added" });
+    }
+
     const doctor = await Doctor.findByIdAndUpdate(
       req.userId,
       { $push: { slots: { date, time, isBooked: false } } },
       { new: true }
     ).select("slots");
+
     return res.status(201).json({ success: true, message: "Slot added", slots: doctor.slots });
   } catch (err) {
+    console.error("addDoctorSlot error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -209,7 +224,7 @@ export const getAllDoctors = async (req, res) => {
     if (available !== undefined) filter.available = available === "true";
     if (search) filter.name = { $regex: search, $options: "i" };
 
-    const doctors = await Doctor.find(filter).select("-password -slots").sort({ createdAt: -1 });
+    const doctors = await Doctor.find(filter).select("-password").sort({ createdAt: -1 });
     return res.status(200).json({ success: true, doctors });
   } catch (err) {
     return res.status(500).json({ success: false, message: "Server error" });

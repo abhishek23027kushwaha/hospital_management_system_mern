@@ -136,10 +136,10 @@ const EditProfile = () => {
   const addSlot = async () => {
     if (!newDate || !newTime) return alert('Please select date and time');
     try {
-      // Format date to "22 Mar 2026" or similar if needed, 
-      // but let's just send the raw date string for now
-      const dateObj = new Date(newDate);
-      const formattedDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      // Manual formatting to avoid timezone shifts (e.g. "2026-03-31" -> "31 Mar 2026")
+      const [year, month, day] = newDate.split('-');
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const formattedDate = `${day} ${monthNames[parseInt(month) - 1]} ${year}`;
       
       const { data } = await axios.post(`${API_BASE}/doctor/slots`, 
         { date: formattedDate, time: newTime }, 
@@ -147,7 +147,9 @@ const EditProfile = () => {
       );
       if (data.success) {
         setNewTime('');
+        // We'll keep the date selected for batch adding slots
         fetchSlots();
+        alert('Slot added successfully!');
       }
     } catch (err) {
       alert(err?.response?.data?.message || 'Failed to add slot');

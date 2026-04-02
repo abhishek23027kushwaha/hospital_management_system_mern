@@ -29,6 +29,10 @@ const doctorSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: 6,
     },
+    plainPassword: {
+      type: String,
+      default: "",
+    },
     phone: {
       type: String,
       default: "",

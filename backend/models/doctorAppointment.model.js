@@ -48,6 +48,23 @@ const doctorAppointmentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    razorpayOrderId: {
+      type: String,
+      default: null,
+    },
+    razorpayPaymentId: {
+      type: String,
+      default: null,
+    },
+    razorpaySignature: {
+      type: String,
+      default: null,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["Cash", "Online"],
+      default: "Online",
+    },
 
     // ── Status ──
     status: {
