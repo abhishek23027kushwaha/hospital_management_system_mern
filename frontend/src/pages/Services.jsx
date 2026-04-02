@@ -73,25 +73,13 @@ const Services = () => {
     <div className="min-h-screen bg-white flex flex-col">
 
       {/* ── Hero Banner ──────────────────────────────────────── */}
-      <section
-        className="relative py-16 px-6 text-center overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%)" }}
-      >
-        {/* Decorative blobs */}
-        <div className="absolute -top-16 -left-16 w-56 h-56 bg-emerald-300/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -right-16 w-56 h-56 bg-teal-300/25 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative max-w-2xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/60 backdrop-blur-sm rounded-full text-emerald-700 text-xs font-semibold border border-emerald-200 mb-2">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            Safe, accurate &amp; reliable testing.
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-emerald-900 leading-tight">
-            <span className="border-b-4 border-emerald-400 pb-1">Our</span>{" "}
-            Diagnostic Services
+      <section className="relative py-20 px-6 text-center bg-[#ecfdf5]">
+        <div className="max-w-3xl mx-auto space-y-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-[#114232]">
+            Our Diagnostic Services
           </h1>
-          <p className="text-emerald-700 text-base md:text-lg max-w-xl mx-auto">
-            Advanced medical diagnostics with precision equipment and expert pathologists — all under one roof.
+          <p className="text-[#34ad7b] text-lg md:text-xl font-medium">
+            Safe, accurate &amp; reliable testing.
           </p>
         </div>
       </section>
