@@ -13,7 +13,7 @@ const MyAppointments = () => {
 
   const fetchDoctorAppointments = async () => {
     try {
-      const { data } = await axios.get(`/appointments/my`);
+      const { data } = await axios.get(`/patient/appointments/my`);
       if (data.success) {
         setDoctorAppts(data.appointments);
       }

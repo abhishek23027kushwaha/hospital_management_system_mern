@@ -116,7 +116,7 @@ const Dashboard = () => {
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight uppercase" style={{ letterSpacing: '-0.01em' }}>
             {doctor?.name || "Doctor Dashboard"}
           </h1>
-          <p className="text-[10px] text-gray-400 font-mono mt-1">ID: {doctor?._id}</p>
+          {/* <p className="text-[10px] text-gray-400 font-mono mt-1">ID {doctor?._id}</p> */}
         </div>
         <div className="flex items-center gap-3 text-sm text-gray-500 pt-1">
           <span className="font-medium">{stats.total} total</span>

@@ -188,7 +188,7 @@ const Appointments = () => {
     setError("");
 
     try {
-      const { data } = await axios.post(`/appointments/book`, form);
+      const { data } = await axios.post(`/patient/appointments/book`, form);
       
       if (data.success) {
         if (form.paymentMethod === 'Cash') {
@@ -206,7 +206,7 @@ const Appointments = () => {
             order_id: order.id,
             handler: async (response) => {
               try {
-                const verifyRes = await axios.post(`/appointments/verify-payment`, {
+                const verifyRes = await axios.post(`/patient/appointments/verify-payment`, {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,

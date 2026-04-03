@@ -8,7 +8,7 @@ import connectDB from "./db.js";
 import authRoutes  from "./routes/auth.routes.js";
 import adminRoutes  from "./routes/admin.routes.js";
 import doctorRoutes from "./routes/doctor.routes.js";
-import appointmentRoutes from "./routes/appointment.routes.js";
+import patientAppointmentRoutes from "./routes/patientAppointment.routes.js";
 import serviceRoutes from "./routes/service.routes.js";
 import serviceAppointmentRoutes from "./routes/serviceAppointment.routes.js";
 
@@ -35,7 +35,7 @@ app.get("/", (req, res) => res.json({ success: true, message: "MediCare API is r
 app.use("/api/auth",   authRoutes);
 app.use("/api/admin",  adminRoutes);
 app.use("/api/doctor", doctorRoutes);
-app.use("/api/appointments",appointmentRoutes);
+app.use("/api/patient/appointments",patientAppointmentRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/service-appointments",serviceAppointmentRoutes);
 
