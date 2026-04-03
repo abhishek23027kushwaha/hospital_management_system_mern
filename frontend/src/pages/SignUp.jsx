@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User, Phone, Calendar, ChevronDown } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../redux/user.slice.js';
-import axios from 'axios';
+import axios from '../utils/axiosInstance';
 
-const API_BASE = 'http://localhost:8000/api';
+
 
 const Blob = ({ style, duration, delay }) => (
   <motion.div
@@ -46,7 +46,7 @@ const SignUp = () => {
     setLoading(true);
     setError('');
     try {
-      const { data } = await axios.post(`${API_BASE}/auth/register`, form, { withCredentials: true });
+      const { data } = await axios.post(`/auth/register`, form);
       if (data.success) {
         dispatch(setUser({ user: data.user, token: data.token }));
         navigate('/');

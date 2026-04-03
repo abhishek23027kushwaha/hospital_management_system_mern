@@ -1,21 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   LayoutGrid, CalendarCheck, IndianRupee,
-  CheckCircle2, XCircle, Search, RefreshCw
+  CheckCircle2, XCircle, Search, RefreshCw, Loader2
 } from 'lucide-react';
+import axios from '../../utils/axiosInstance';
 
-/* ─── Sample Data ─── */
-const SAMPLE_SERVICES = [
-  {
-    id: 1,
-    name: 'Full Body service',
-    image: null,
-    price: 1,
-    appointments: 2,
-    completed: 1,
-    canceled: 1,
-  },
-];
+
 
 /* ─── Stat Card ─── */
 const StatCard = ({ icon: Icon, label, value }) => (
@@ -59,20 +49,40 @@ const ServiceImg = ({ src, name }) => (
 );
 
 export default function ServiceDashboard() {
-  const [services, setServices] = useState(SAMPLE_SERVICES);
+  const [services, setServices] = useState([]);
+  const [stats, setStats] = useState({ 
+    totalServices: 0, totalAppointments: 0, totalEarnings: 0, totalCompleted: 0, totalCanceled: 0 
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
 
-  const filtered = services.filter(s =>
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const { data } = await axios.get(`/services/dashboard`);
+      if (data.success) {
+        setServices(data.services);
+        setStats(data.stats);
+      }
+    } catch (err) {
+      console.error('fetchData error:', err);
+      setError(err?.response?.data?.message || 'Failed to load service dashboard');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const filteredData = services.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalServices     = services.length;
-  const totalAppointments = services.reduce((a, s) => a + s.appointments, 0);
-  const totalEarning      = services.reduce((a, s) => a + s.price * s.completed, 0);
-  const totalCompleted    = services.reduce((a, s) => a + s.completed, 0);
-  const totalCanceled     = services.reduce((a, s) => a + s.canceled, 0);
-
-  const refresh = () => setServices(SAMPLE_SERVICES);
+  const refresh = () => fetchData();
 
   return (
     <div style={{ padding: '28px 32px', fontFamily: "'Inter','Segoe UI',sans-serif", minHeight: '100vh', background: '#f0fdf4' }}>
@@ -84,17 +94,17 @@ export default function ServiceDashboard() {
           <p style={{ color: '#6b7280', fontSize: 13, marginTop: 4 }}>Overview of services, appointments and earnings</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 4 }}>
-          <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 500 }}>{totalServices} service{totalServices !== 1 ? 's' : ''}</span>
+          <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 500 }}>{stats.totalServices} service{stats.totalServices !== 1 ? 's' : ''}</span>
           <button
             onClick={refresh}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '7px 16px', borderRadius: 20,
-              border: '1.5px solid #0d9488', background: 'transparent',
+              border: '1.5px solid #0d9488', background: '#fff',
               color: '#0d9488', fontWeight: 600, fontSize: 13, cursor: 'pointer',
             }}
           >
-            <RefreshCw size={13} />
+            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
             Refresh
           </button>
         </div>
@@ -102,11 +112,11 @@ export default function ServiceDashboard() {
 
       {/* ── Stat Cards ── */}
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
-        <StatCard icon={LayoutGrid}    label="Total Services"     value={totalServices} />
-        <StatCard icon={CalendarCheck} label="Total Appointments" value={totalAppointments} />
-        <StatCard icon={IndianRupee}   label="Total Earning"      value={`₹${totalEarning}`} />
-        <StatCard icon={CheckCircle2}  label="Completed"          value={totalCompleted} />
-        <StatCard icon={XCircle}       label="Canceled"           value={totalCanceled} />
+        <StatCard icon={LayoutGrid}    label="Total Services"     value={stats.totalServices} />
+        <StatCard icon={CalendarCheck} label="Total Appointments" value={stats.totalAppointments} />
+        <StatCard icon={IndianRupee}   label="Total Earning"      value={`₹${stats.totalEarnings}`} />
+        <StatCard icon={CheckCircle2}  label="Completed"          value={stats.totalCompleted} />
+        <StatCard icon={XCircle}       label="Canceled"           value={stats.totalCanceled} />
       </div>
 
       {/* ── Search ── */}
@@ -114,7 +124,7 @@ export default function ServiceDashboard() {
         display: 'flex', alignItems: 'center', gap: 8,
         background: '#fff', border: '1.5px solid #d1fae5',
         borderRadius: 30, padding: '9px 16px',
-        width: 220, marginBottom: 20,
+        width: 260, marginBottom: 20,
       }}>
         <Search size={14} color="#9ca3af" />
         <input
@@ -140,42 +150,46 @@ export default function ServiceDashboard() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan={6} style={{ padding: 60, textAlign: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                    <Loader2 className="animate-spin" size={24} color="#0d9488" />
+                    <span style={{ fontSize: 13, color: '#6b7280' }}>Loading Dashboard Data...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : error ? (
+              <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#dc2626' }}>{error}</td></tr>
+            ) : filteredData.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
                   No services found
                 </td>
               </tr>
-            ) : filtered.map(s => {
-              const earning = s.price * s.completed;
+            ) : filteredData.map(s => {
               return (
-                <tr key={s.id} style={{ borderTop: '1px solid #f3f4f6' }}>
-                  {/* Service Name + Image */}
+                <tr key={s._id} style={{ borderTop: '1px solid #f3f4f6' }}>
                   <td style={{ padding: '14px 18px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <ServiceImg src={s.image} name={s.name} />
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#0d9488' }}>{s.name}</span>
                     </div>
                   </td>
-                  {/* Price */}
                   <td style={{ padding: '14px 18px', textAlign: 'center', fontSize: 14, fontWeight: 600, color: '#111827' }}>
                     ₹{s.price}
                   </td>
-                  {/* Appointments */}
                   <td style={{ padding: '14px 18px', textAlign: 'center', fontSize: 14, color: '#374151' }}>
                     {s.appointments}
                   </td>
-                  {/* Completed - green */}
                   <td style={{ padding: '14px 18px', textAlign: 'center', fontSize: 14, fontWeight: 700, color: '#16a34a' }}>
                     {s.completed}
                   </td>
-                  {/* Canceled - red */}
                   <td style={{ padding: '14px 18px', textAlign: 'center', fontSize: 14, fontWeight: 700, color: '#dc2626' }}>
                     {s.canceled}
                   </td>
-                  {/* Earning */}
                   <td style={{ padding: '14px 18px', textAlign: 'center', fontSize: 14, fontWeight: 600, color: '#111827' }}>
-                    ₹{earning}
+                    ₹{s.earnings}
                   </td>
                 </tr>
               );

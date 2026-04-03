@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../utils/axiosInstance';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -10,7 +10,7 @@ import {
   Phone, User, Mail, ChevronRight
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8000/api';
+
 
 /* ─── Success Screen ─────────────────────────────────────── */
 function SuccessScreen({ data, onReset }) {
@@ -118,7 +118,7 @@ const Appointments = () => {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const { data } = await axios.get(`${API_BASE}/doctor/all?available=true`);
+        const { data } = await axios.get(`/doctor/all?available=true`);
         if (data.success) {
           setDoctorList(data.doctors);
           if (doctorId) {
@@ -188,7 +188,7 @@ const Appointments = () => {
     setError("");
 
     try {
-      const { data } = await axios.post(`${API_BASE}/appointments/book`, form, { withCredentials: true });
+      const { data } = await axios.post(`/appointments/book`, form);
       
       if (data.success) {
         if (form.paymentMethod === 'Cash') {
@@ -206,12 +206,12 @@ const Appointments = () => {
             order_id: order.id,
             handler: async (response) => {
               try {
-                const verifyRes = await axios.post(`${API_BASE}/appointments/verify-payment`, {
+                const verifyRes = await axios.post(`/appointments/verify-payment`, {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
                   appointmentId: appointment._id
-                }, { withCredentials: true });
+                });
 
                 if (verifyRes.data.success) {
                   setSubmitted(true);

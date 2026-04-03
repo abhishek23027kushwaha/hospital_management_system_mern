@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X } from 'lucide-react';
-import axios from 'axios';
+import axios from '../utils/axiosInstance';
 import DoctorCard from '../components/DoctorCard';
 
-const API_BASE = 'http://localhost:8000/api';
+
 
 const SPECIALITIES = [
   'All', 'Cardiologist', 'Neurologist', 'Pediatrician', 'Dermatologist',
@@ -23,7 +23,7 @@ const AllDoctors = () => {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const { data } = await axios.get(`${API_BASE}/doctor/all`);
+        const { data } = await axios.get(`/doctor/all`);
         if (data.success) {
           setDoctors(data.doctors);
         }

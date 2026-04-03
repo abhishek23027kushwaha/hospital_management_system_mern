@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../utils/axiosInstance';
 import DoctorCard from '../components/DoctorCard';
 
-const API_BASE = 'http://localhost:8000/api';
+
 
 const Doctors = () => {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ const Doctors = () => {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const { data } = await axios.get(`${API_BASE}/doctor/all?available=true`);
+        const { data } = await axios.get(`/doctor/all?available=true`);
         if (data.success) {
           setDoctors(data.doctors.slice(0, 8)); // Top 8
         }

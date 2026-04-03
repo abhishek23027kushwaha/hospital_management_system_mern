@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useState ,useEffect} from 'react';
-import axios from 'axios';
+import axios from '../utils/axiosInstance';
 // ── Service Images ─────────────────────────────────────────────
 import imgBloodTest from '../assets/service-blood-test.png';
 import imgXray from '../assets/service-xray.png';
@@ -54,7 +54,7 @@ const Services = () => {
 
   const fetchServices = async () => {
     try {
-      const { data } = await axios.get('http://localhost:8000/api/services');
+      const { data } = await axios.get('/services');
       if (data.success) {
         setServices(data.services);
       }

@@ -14,7 +14,8 @@ const cookieOpts = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
-// ── POST /api/doctor/login ────────────────────────────────────────────────
+// ── AUTH ──────────────────────────────────────────────────────────────────
+// ── POST /api/doctor/login ───────────────────────────────────────────────
 export const doctorLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -22,13 +23,13 @@ export const doctorLogin = async (req, res) => {
       return res.status(400).json({ success: false, message: "Email and password are required" });
     }
 
-    const doctor = await Doctor.findOne({ email: email.toLowerCase() });
+    const doctor = await Doctor.findOne({ email });
     if (!doctor) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
-    const match = await bcrypt.compare(password, doctor.password);
-    if (!match) {
+    const isMatch = await bcrypt.compare(password, doctor.password);
+    if (!isMatch) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
@@ -37,18 +38,13 @@ export const doctorLogin = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Logged in successfully",
+      message: "Doctor logged in successfully",
       doctor: {
-        _id: doctor._id,
+        id: doctor._id,
         name: doctor.name,
         email: doctor.email,
         specialization: doctor.specialization,
-        experience: doctor.experience,
-        fee: doctor.fee,
-        about: doctor.about,
         image: doctor.image,
-        available: doctor.available,
-        phone: doctor.phone,
         role: doctor.role || "doctor",
       },
       token,
@@ -59,13 +55,18 @@ export const doctorLogin = async (req, res) => {
   }
 };
 
-// ── GET /api/doctor/profile ───────────────────────────────────────────────
+// ── PROFILE ───────────────────────────────────────────────────────────────
+
+// ── GET /api/doctor/profile ──────────────────────────────────────────────
 export const getDoctorProfile = async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.userId).select("-password");
-    if (!doctor) return res.status(404).json({ success: false, message: "Doctor not found" });
+    if (!doctor) {
+      return res.status(404).json({ success: false, message: "Doctor not found" });
+    }
     return res.status(200).json({ success: true, doctor });
   } catch (err) {
+    console.error("getDoctorProfile error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -73,71 +74,43 @@ export const getDoctorProfile = async (req, res) => {
 // ── PUT /api/doctor/profile ───────────────────────────────────────────────
 export const updateDoctorProfile = async (req, res) => {
   try {
-    const {
-      name, phone, specialization, experience,
-      fee, about, available, image,
-      qualifications, location, patients, success, rating,
-    } = req.body;
+    const { name, specialization, fee, phone, address, gender, age, degree, experience, about } = req.body;
+    const updateData = { name, specialization, fee, phone, address, gender, age, degree, experience, about };
 
-    const updates = {};
-    if (name !== undefined)           updates.name           = name.trim();
-    if (phone !== undefined)          updates.phone          = phone;
-    if (specialization !== undefined) updates.specialization = specialization;
-    if (experience !== undefined)     updates.experience     = Number(experience);
-    if (fee !== undefined)            updates.fee            = Number(fee);
-    if (about !== undefined)          updates.about          = about;
-    if (available !== undefined)      updates.available      = Boolean(available);
-    if (image !== undefined)          updates.image          = image;
-    // Extra profile fields (shown on edit profile page)
-    if (qualifications !== undefined) updates.qualifications = qualifications;
-    if (location !== undefined)       updates.location       = location;
-    if (patients !== undefined)       updates.patients       = patients;
-    if (success !== undefined)        updates.success        = success;
-    if (rating !== undefined)         updates.rating         = Number(rating);
+    if (req.file) {
+      updateData.image = req.file.path;
+    }
 
-    const doctor = await Doctor.findByIdAndUpdate(req.userId, updates, { new: true }).select("-password");
+    const doctor = await Doctor.findByIdAndUpdate(req.userId, updateData, { new: true }).select("-password");
     return res.status(200).json({ success: true, message: "Profile updated", doctor });
   } catch (err) {
+    console.error("updateDoctorProfile error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// ── GET /api/doctor/slots ─────────────────────────────────────────────────
+// ── SLOTS ─────────────────────────────────────────────────────────────────
+
+// ── GET /api/doctor/slots ───────────────────────────────────────────────
 export const getDoctorSlots = async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.userId).select("slots");
-    if (!doctor) return res.status(404).json({ success: false, message: "Doctor not found" });
-    return res.status(200).json({ success: true, slots: doctor.slots });
+    return res.status(200).json({ success: true, slots: doctor?.slots || [] });
   } catch (err) {
+    console.error("getDoctorSlots error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// ── POST /api/doctor/slots ────────────────────────────────────────────────
+// ── POST /api/doctor/slots ──────────────────────────────────────────────
 export const addDoctorSlot = async (req, res) => {
   try {
-    const { date, time } = req.body;
-    if (!date || !time) {
-      return res.status(400).json({ success: false, message: "Date and time are required" });
-    }
+    const { day, time } = req.body; // e.g. "Monday", "10:30 AM"
+    if (!day || !time) return res.status(400).json({ success: false, message: "Day and time required" });
 
-    // Check if slot already exists
-    const existingDoctor = await Doctor.findById(req.userId);
-    if (!existingDoctor) return res.status(404).json({ success: false, message: "Doctor not found" });
-
-    const isDuplicate = existingDoctor.slots.some(
-      (slot) => slot.date === date && slot.time === time
-    );
-
-    if (isDuplicate) {
-      return res.status(400).json({ success: false, message: "This slot is already added" });
-    }
-
-    const doctor = await Doctor.findByIdAndUpdate(
-      req.userId,
-      { $push: { slots: { date, time, isBooked: false } } },
-      { new: true }
-    ).select("slots");
+    const doctor = await Doctor.findById(req.userId);
+    doctor.slots.push({ day, time });
+    await doctor.save();
 
     return res.status(201).json({ success: true, message: "Slot added", slots: doctor.slots });
   } catch (err) {
@@ -146,20 +119,21 @@ export const addDoctorSlot = async (req, res) => {
   }
 };
 
-// ── DELETE /api/doctor/slots/:slotId ─────────────────────────────────────
+// ── DELETE /api/doctor/slots/:slotId ────────────────────────────────────
 export const deleteDoctorSlot = async (req, res) => {
   try {
     const { slotId } = req.params;
-    const doctor = await Doctor.findByIdAndUpdate(
-      req.userId,
-      { $pull: { slots: { _id: slotId } } },
-      { new: true }
-    ).select("slots");
-    return res.status(200).json({ success: true, message: "Slot removed", slots: doctor.slots });
+    const doctor = await Doctor.findById(req.userId);
+    doctor.slots = doctor.slots.filter((s) => s._id.toString() !== slotId);
+    await doctor.save();
+    return res.status(200).json({ success: true, message: "Slot deleted", slots: doctor.slots });
   } catch (err) {
+    console.error("deleteDoctorSlot error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+// ── APPOINTMENTS ──────────────────────────────────────────────────────────
 
 // ── GET /api/doctor/appointments ──────────────────────────────────────────
 export const getDoctorAppointments = async (req, res) => {
@@ -174,7 +148,7 @@ export const getDoctorAppointments = async (req, res) => {
     const cancelled = appointments.filter((a) => a.status === "Cancelled").length;
     const earnings  = appointments
       .filter((a) => a.status === "Completed")
-      .reduce((sum, a) => sum + a.fee, 0);
+      .reduce((sum, a) => sum + (Number(a.fee) || 0), 0);
 
     return res.status(200).json({
       success: true,
@@ -182,7 +156,8 @@ export const getDoctorAppointments = async (req, res) => {
       appointments,
     });
   } catch (err) {
-    return res.status(500).json({ success: false, message: "Server error" });
+    console.error("getDoctorAppointments error:", err);
+    return res.status(500).json({ success: false, message: "Server error", error: err.message });
   }
 };
 
@@ -190,54 +165,42 @@ export const getDoctorAppointments = async (req, res) => {
 export const updateAppointmentStatusByDoctor = async (req, res) => {
   try {
     const { status } = req.body;
-    const allowed = ["Pending", "Completed", "Cancelled"];
-    if (!allowed.includes(status)) {
-      return res.status(400).json({ success: false, message: `Status must be one of: ${allowed.join(", ")}` });
-    }
-
-    const appt = await DoctorAppointment.findOne({
-      _id: req.params.id,
-      doctor: req.userId,
-    });
+    const appt = await DoctorAppointment.findByIdAndUpdate(req.params.id, { status }, { new: true });
     if (!appt) return res.status(404).json({ success: false, message: "Appointment not found" });
 
-    appt.status = status;
-    await appt.save();
-
-    // If completed, add fee to doctor earnings
+    // if completed, increment doctor's totalEarnings (field in Doctor model)
     if (status === "Completed") {
       await Doctor.findByIdAndUpdate(req.userId, { $inc: { totalEarnings: appt.fee } });
     }
 
-    return res.status(200).json({ success: true, message: "Status updated", appointment: appt });
+    return res.status(200).json({ success: true, message: `Status updated to ${status}`, appointment: appt });
   } catch (err) {
+    console.error("updateAppointmentStatusByDoctor error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// ── GET /api/doctor/all (public) ──────────────────────────────────────────
+// ── PUBLIC / OTHERS ───────────────────────────────────────────────────────
+
+// ── GET /api/doctor/all ──────────────────────────────────────────────────
 export const getAllDoctors = async (req, res) => {
   try {
-    const { specialization, available, search } = req.query;
-    const filter = {};
-    if (specialization) filter.specialization = specialization;
-    if (available !== undefined) filter.available = available === "true";
-    if (search) filter.name = { $regex: search, $options: "i" };
-
-    const doctors = await Doctor.find(filter).select("-password").sort({ createdAt: -1 });
+    const doctors = await Doctor.find().select("-password");
     return res.status(200).json({ success: true, doctors });
   } catch (err) {
+    console.error("getAllDoctors error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// ── GET /api/doctor/:id (public) ─────────────────────────────────────────
+// ── GET /api/doctor/:id ──────────────────────────────────────────────────
 export const getDoctorById = async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.id).select("-password");
     if (!doctor) return res.status(404).json({ success: false, message: "Doctor not found" });
     return res.status(200).json({ success: true, doctor });
   } catch (err) {
+    console.error("getDoctorById error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "../utils/axiosInstance";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, CheckCircle2, CreditCard, Stethoscope, Microscope } from "lucide-react";
 import toast from "react-hot-toast";
 
-const API_BASE = "http://localhost:8000/api";
+
 
 const MyAppointments = () => {
   const [doctorAppts, setDoctorAppts] = useState([]);
@@ -13,9 +13,7 @@ const MyAppointments = () => {
 
   const fetchDoctorAppointments = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE}/appointments/my`, {
-        withCredentials: true,
-      });
+      const { data } = await axios.get(`/appointments/my`);
       if (data.success) {
         setDoctorAppts(data.appointments);
       }
@@ -26,9 +24,7 @@ const MyAppointments = () => {
 
   const fetchServiceAppointments = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE}/service-appointments/my`, {
-        withCredentials: true,
-      });
+      const { data } = await axios.get(`/service-appointments/my`);
       if (data.success) {
         setServiceAppts(data.appointments);
       }

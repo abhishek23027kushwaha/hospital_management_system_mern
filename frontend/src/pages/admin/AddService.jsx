@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ImageIcon, Plus, CalendarCheck, CheckCircle2, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../utils/axiosInstance';
 
-const API_BASE = 'http://localhost:8000/api';
+
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const HOURS   = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -64,8 +64,7 @@ export default function AddService() {
       formData.append('instructions', JSON.stringify(instructions));
       formData.append('slots', JSON.stringify(slots));
 
-      const { data } = await axios.post(`${API_BASE}/services`, formData, {
-        withCredentials: true,
+      const { data } = await axios.post(`/services`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

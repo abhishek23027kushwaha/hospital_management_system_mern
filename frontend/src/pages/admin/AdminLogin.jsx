@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, ShieldCheck } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../redux/user.slice.js';
-import axios from 'axios';
+import axios from '../../utils/axiosInstance.js';
 
-const API_BASE = 'http://localhost:8000/api';
+
 
 /* Floating animated blob for admin (darker green/slate) */
 const AdminBlob = ({ style, duration, delay }) => (
@@ -37,7 +37,7 @@ const AdminLogin = () => {
     setError('');
     try {
       // Calling the specific admin login endpoint
-      const { data } = await axios.post(`${API_BASE}/admin/login`, form, { withCredentials: true });
+      const { data } = await axios.post(`/admin/login`, form);
       if (data.success) {
         dispatch(setUser({ user: data.admin, token: data.token }));
         navigate('/admin');

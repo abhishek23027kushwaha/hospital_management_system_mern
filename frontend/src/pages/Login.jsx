@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../redux/user.slice.js';
-import axios from 'axios';
+import axios from '../utils/axiosInstance.js';
 
-const API_BASE = 'http://localhost:8000/api';
+
 
 /* Floating animated blob */
 const Blob = ({ style, duration, delay }) => (
@@ -36,7 +36,7 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      const { data } = await axios.post(`${API_BASE}/auth/login`, form, { withCredentials: true });
+      const { data } = await axios.post(`/auth/login`, form);
       if (data.success) {
         dispatch(setUser({ user: data.user, token: data.token }));
         navigate('/');

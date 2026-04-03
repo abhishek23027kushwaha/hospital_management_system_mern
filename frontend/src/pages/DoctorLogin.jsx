@@ -3,10 +3,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, Stethoscope } from 'lucide-react';
 import { useDispatch } from 'react-redux';
-import { setUser } from '../redux/user.slice.js';
-import axios from 'axios';
+import { setDoctor } from '../redux/doctor.slice.js';
+import axios from '../utils/axiosInstance.js';
 
-const API_BASE = 'http://localhost:8000/api';
+
 
 const DoctorBlob = ({ style, duration, delay }) => (
   <motion.div
@@ -35,9 +35,9 @@ const DoctorLogin = () => {
     setLoading(true);
     setError('');
     try {
-      const { data } = await axios.post(`${API_BASE}/doctor/login`, form, { withCredentials: true });
+      const { data } = await axios.post(`/doctor/login`, form);
       if (data.success) {
-        dispatch(setUser({ user: data.doctor, token: data.token }));
+        dispatch(setDoctor({ doctor: data.doctor, token: data.token }));
         navigate('/doctor-admin');
       }
     } catch (err) {

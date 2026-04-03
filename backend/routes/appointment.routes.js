@@ -16,6 +16,6 @@ router.use(protectRoute, isUser);
 router.post("/:id/cancel",    cancelDoctorAppointment);   // cancel own appointment
 router.post("/book",          bookDoctorAppointment);      // book new appointment + create order
 router.post("/verify-payment", verifyDoctorAppointmentPayment); // verify payment + confirm appt
-router.get ("/my",            getUserDoctorAppointments);  // get own appointments
+router.get ("/appointments", getUserDoctorAppointments);  // get own appointments
 
 export default router;

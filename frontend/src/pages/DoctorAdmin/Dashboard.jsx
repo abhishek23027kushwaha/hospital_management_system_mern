@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Users, CalendarCheck, CheckCircle2, XCircle, Phone } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../utils/axiosInstance';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
-import { selectUser } from '../../redux/user.slice';
+import { selectDoctor } from '../../redux/doctor.slice';
 
 /* Inter font */
+
 const fontStyle = { fontFamily: "'Inter', 'Segoe UI', sans-serif" };
 
 /* ── Status config ─────────────────────────────────────── */
@@ -37,7 +38,7 @@ const Avatar = ({ name }) => {
 
 /* ── Main Dashboard ────────────────────────────────────── */
 const Dashboard = () => {
-  const user = useSelector(selectUser);
+  const doctor = useSelector(selectDoctor);
   const [appointments, setAppointments] = useState([]);
   const [stats, setStats] = useState({ total: 0, completed: 0, pending: 0, cancelled: 0, earnings: 0 });
   const [loading, setLoading] = useState(true);
@@ -45,7 +46,8 @@ const Dashboard = () => {
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get('/api/doctor/appointments', { withCredentials: true });
+      const { data } = await axios.get(`/doctor/appointments`);
+      console.log(data);
       if (data.success) {
         setAppointments(data.appointments);
         setStats(data.stats);
@@ -63,7 +65,7 @@ const Dashboard = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const { data } = await axios.put(`/api/doctor/appointments/${id}/status`, { status: newStatus }, { withCredentials: true });
+      const { data } = await axios.put(`/doctor/appointments/${id}/status`, { status: newStatus });
       if (data.success) {
         toast.success(`Status updated to ${newStatus}`);
         fetchDashboardData(); // Refresh all stats & list
@@ -112,9 +114,9 @@ const Dashboard = () => {
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight uppercase" style={{ letterSpacing: '-0.01em' }}>
-            {user?.name || "Doctor Dashboard"}
+            {doctor?.name || "Doctor Dashboard"}
           </h1>
-          <p className="text-[10px] text-gray-400 font-mono mt-1">ID: {user?._id}</p>
+          <p className="text-[10px] text-gray-400 font-mono mt-1">ID: {doctor?._id}</p>
         </div>
         <div className="flex items-center gap-3 text-sm text-gray-500 pt-1">
           <span className="font-medium">{stats.total} total</span>
@@ -196,7 +198,7 @@ const Dashboard = () => {
                 <div className="flex flex-col gap-1 py-1 px-3 bg-teal-50/50 rounded-xl border border-teal-50">
                    <div className="flex justify-between items-center text-[10px] font-black text-teal-700 uppercase tracking-wider">
                      <span>{appt.date}</span>
-                     <span>{appt.time}</span>
+                     <span>{appt.timeSlot}</span>
                    </div>
                 </div>
 

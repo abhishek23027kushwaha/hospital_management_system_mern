@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Search, Trash2, Edit2, Users, Loader2, Eye, EyeOff, X, Upload, Calendar, Plus, Clock, UserPlus } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../utils/axiosInstance';
 
-const API_BASE = 'http://localhost:8000/api';
+
 
 export default function ListDoctors() {
   const [search, setSearch] = useState('');
@@ -15,7 +15,7 @@ export default function ListDoctors() {
   const fetchDoctors = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get(`${API_BASE}/admin/doctors`, { withCredentials: true });
+      const { data } = await axios.get(`/admin/doctors`);
       if (data.success) {
         setDoctors(data.doctors);
       }
@@ -38,7 +38,7 @@ export default function ListDoctors() {
   const remove = async (id) => {
     if (window.confirm('Remove this doctor?')) {
       try {
-        const { data } = await axios.delete(`${API_BASE}/admin/doctors/${id}`, { withCredentials: true });
+        const { data } = await axios.delete(`/admin/doctors/${id}`);
         if (data.success) {
           setDoctors(prev => prev.filter(x => x._id !== id));
         }
@@ -177,8 +177,7 @@ function EditDoctorModal({ doctor, onClose, onUpdate }) {
       if (img) fd.append('image', img);
       fd.append('slots', JSON.stringify(slots));
 
-      const { data } = await axios.put(`${API_BASE}/admin/doctors/${doctor._id}`, fd, {
-        withCredentials: true,
+      const { data } = await axios.put(`/admin/doctors/${doctor._id}`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

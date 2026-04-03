@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Users, UserCheck, CalendarCheck, IndianRupee, CheckCircle2, XCircle, Search, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../utils/axiosInstance';
 
-const API_BASE = 'http://localhost:8000/api';
+
 
 export default function Dashboard() {
   const [stats, setStats] = useState([
@@ -23,8 +23,8 @@ export default function Dashboard() {
     try {
       setLoading(true);
       const [statsRes, doctorsRes] = await Promise.all([
-        axios.get(`${API_BASE}/admin/dashboard`, { withCredentials: true }),
-        axios.get(`${API_BASE}/admin/doctors`,   { withCredentials: true })
+        axios.get(`/admin/dashboard`),
+        axios.get(`/admin/doctors`)
       ]);
 
       if (statsRes.data.success) {

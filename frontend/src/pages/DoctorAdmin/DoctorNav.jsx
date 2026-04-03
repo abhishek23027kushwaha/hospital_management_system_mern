@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, CalendarCheck, UserPen, LogOut, Stethoscope } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { clearDoctor } from '../../redux/doctor.slice.js';
 
 const navLinks = [
   { label: 'Dashboard',    to: '/doctor-admin',             icon: LayoutDashboard },
@@ -10,9 +13,16 @@ const navLinks = [
 
 const DoctorNav = () => {
   const location = useLocation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const isActive = (to) => location.pathname === to;
+
+  const handleLogout = () => {
+    dispatch(clearDoctor());
+    navigate('/doctor/login');
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3">
@@ -49,9 +59,11 @@ const DoctorNav = () => {
           ))}
         </div>
 
-        {/* ── Logout ── */}
         <div className="hidden md:flex items-center">
-          <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all duration-200 border border-gray-100">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all duration-200 border border-gray-100"
+          >
             <LogOut size={15} />
             Logout
           </button>
@@ -86,7 +98,10 @@ const DoctorNav = () => {
               {label}
             </Link>
           ))}
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-all mt-1 border-t border-gray-100 pt-3">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-all mt-1 border-t border-gray-100 pt-3"
+          >
             <LogOut size={16} />
             Logout
           </button>

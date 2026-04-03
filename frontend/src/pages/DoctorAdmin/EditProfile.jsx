@@ -17,9 +17,9 @@ import {
   Save,
   Loader2
 } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../utils/axiosInstance';
 
-const API_BASE = 'http://localhost:8000/api';
+
 const fontStyle = { fontFamily: "'Inter', 'Segoe UI', sans-serif" };
 
 const EditProfile = () => {
@@ -49,7 +49,7 @@ const EditProfile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get(`${API_BASE}/doctor/profile`, { withCredentials: true });
+      const { data } = await axios.get(`/doctor/profile`);
       if (data.success) {
         setProfileData({
           ...data.doctor,
@@ -67,7 +67,7 @@ const EditProfile = () => {
 
   const fetchSlots = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE}/doctor/slots`, { withCredentials: true });
+      const { data } = await axios.get(`/doctor/slots`);
       if (data.success) {
         // Group slots by date for display
         const grouped = data.slots.reduce((acc, slot) => {
@@ -117,8 +117,7 @@ const EditProfile = () => {
         }
       });
 
-      const { data } = await axios.put(`${API_BASE}/doctor/profile`, formData, {
-        withCredentials: true,
+      const { data } = await axios.put(`/doctor/profile`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -141,9 +140,8 @@ const EditProfile = () => {
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const formattedDate = `${day} ${monthNames[parseInt(month) - 1]} ${year}`;
       
-      const { data } = await axios.post(`${API_BASE}/doctor/slots`, 
-        { date: formattedDate, time: newTime }, 
-        { withCredentials: true }
+      const { data } = await axios.post(`/doctor/slots`, 
+        { date: formattedDate, time: newTime }
       );
       if (data.success) {
         setNewTime('');
@@ -158,7 +156,7 @@ const EditProfile = () => {
 
   const removeSlot = async (slotId) => {
     try {
-      const { data } = await axios.delete(`${API_BASE}/doctor/slots/${slotId}`, { withCredentials: true });
+      const { data } = await axios.delete(`/doctor/slots/${slotId}`);
       if (data.success) {
         fetchSlots();
       }

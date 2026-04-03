@@ -138,17 +138,17 @@ export const verifyDoctorAppointmentPayment = async (req, res) => {
   }
 };
 
-// ── GET /api/appointments/doctor/my ──────────────────────────────────────
+// ── GET /api/appointments/my ──────────────────────────────────────────
 export const getUserDoctorAppointments = async (req, res) => {
   try {
-    const filter = { patient: req.userId };
-    const appointments = await DoctorAppointment.find(filter)
+    const appointments = await DoctorAppointment.find({ patient: req.userId })
       .populate("doctor", "name specialization fee image phone")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({ success: true, appointments });
   } catch (err) {
-    return res.status(500).json({ success: false, message: "Server error" });
+    console.error("getUserDoctorAppointments error:", err);
+    return res.status(500).json({ success: false, message: "Server error", error: err.message });
   }
 };
 

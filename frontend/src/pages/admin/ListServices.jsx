@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Trash2, Edit2, List, Loader2, X, Plus, CalendarCheck, ImageIcon, CheckCircle2 } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../utils/axiosInstance';
 
-const API_BASE = 'http://localhost:8000/api';
+
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const HOURS   = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -20,7 +20,7 @@ export default function ListServices() {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get(`${API_BASE}/services`, { withCredentials: true });
+      const { data } = await axios.get(`/services`);
       if (data.success) {
         setServices(data.services);
       }
@@ -41,7 +41,7 @@ export default function ListServices() {
   const remove = async (id) => {
     if (window.confirm('Delete this service?')) {
       try {
-        const { data } = await axios.delete(`${API_BASE}/services/${id}`, { withCredentials: true });
+        const { data } = await axios.delete(`/services/${id}`);
         if (data.success) {
           setServices(prev => prev.filter(x => x._id !== id));
         }

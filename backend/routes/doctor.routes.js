@@ -19,8 +19,7 @@ const router = express.Router();
 
 // ── Public routes ─────────────────────────────────────────────────────────
 router.post("/login",  doctorLogin);
-router.get ("/all",    getAllDoctors);    // used by user booking page
-router.get ("/:id",    getDoctorById);
+router.get ("/all",    getAllDoctors);    
 
 // ── Doctor-only routes (requires doctor JWT) ──────────────────────────────
 router.use(protectRoute, isDoctor);
@@ -37,5 +36,8 @@ router.delete("/slots/:slotId",  deleteDoctorSlot);
 // Appointments (doctor sees their own)
 router.get("/appointments",              getDoctorAppointments);
 router.put("/appointments/:id/status",   updateAppointmentStatusByDoctor);
+
+// ── Dynamic Public routes (Must be at the very bottom) ────────────────────
+router.get ("/:id",    getDoctorById);
 
 export default router;

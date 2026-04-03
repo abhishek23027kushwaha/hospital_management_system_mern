@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Search, CalendarDays, Phone, ChevronDown, RefreshCw } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../utils/axiosInstance';
 import toast from 'react-hot-toast';
+
 
 const fontStyle = { fontFamily: "'Inter', 'Segoe UI', sans-serif" };
 
@@ -57,7 +58,7 @@ const AppointmentCard = ({ appt, onStatusChange }) => {
       <div className="flex flex-col gap-1 py-1 px-3 bg-teal-50/50 rounded-xl border border-teal-50">
          <div className="flex justify-between items-center text-[10px] font-black text-teal-700 uppercase tracking-wider">
            <span>{appt.date}</span>
-           <span>{appt.time}</span>
+           <span>{appt.timeSlot}</span>
          </div>
       </div>
 
@@ -110,7 +111,7 @@ const Appointment = () => {
   const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get('/api/doctor/appointments', { withCredentials: true });
+      const { data } = await axios.get(`/doctor/appointments`);
       if (data.success) {
         setAppointments(data.appointments);
       }
@@ -136,7 +137,7 @@ const Appointment = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const { data } = await axios.put(`/api/doctor/appointments/${id}/status`, { status: newStatus }, { withCredentials: true });
+      const { data } = await axios.put(`/doctor/appointments/${id}/status`, { status: newStatus });
       if (data.success) {
         toast.success(`Status updated to ${newStatus}`);
         fetchAppointments();

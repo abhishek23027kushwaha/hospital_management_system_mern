@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
+import axios from '../utils/axiosInstance';
 import { toast } from 'react-hot-toast';
 
 const ServiceBooking = () => {
@@ -33,7 +33,7 @@ const ServiceBooking = () => {
 
   const fetchServiceDetails = async () => {
     try {
-      const { data } = await axios.get(`http://localhost:8000/api/services/${serviceId}`);
+      const { data } = await axios.get(`/services/${serviceId}`);
       if (data.success) {
         setService(data.service);
         // Find first available slot to pre-select
@@ -76,9 +76,7 @@ const ServiceBooking = () => {
         paymentMethod: formData.paymentMethod
       };
 
-      const { data } = await axios.post(`http://localhost:8000/api/service-appointments/book`, bookingData, {
-        withCredentials: true 
-      });
+      const { data } = await axios.post(`/service-appointments/book`, bookingData);
 
       if (data.success) {
         if (formData.paymentMethod === 'Online' && data.order) {
@@ -105,10 +103,10 @@ const ServiceBooking = () => {
       order_id: order.id,
       handler: async (response) => {
         try {
-          const { data } = await axios.post(`http://localhost:8000/api/service-appointments/verify-payment`, {
+          const { data } = await axios.post(`/service-appointments/verify-payment`, {
             ...response,
             appointmentId
-          }, { withCredentials: true });
+          });
 
           if (data.success) {
             toast.success("Payment successful & booking confirmed!");

@@ -1,9 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+// Persist doctor session across page refresh
+const storedDoctor = localStorage.getItem("doctor");
+const storedDoctorToken = localStorage.getItem("doctorToken");
+
 const initialState = {
-  doctorInfo: null,        // logged-in doctor's profile
-  token: null,
-  isAuthenticated: false,
+  doctorInfo: storedDoctor ? JSON.parse(storedDoctor) : null,
+  token: storedDoctorToken || null,
+  isAuthenticated: !!storedDoctor,
 };
 
 const doctorSlice = createSlice({
@@ -15,16 +19,22 @@ const doctorSlice = createSlice({
       state.doctorInfo = doctor;
       state.token = token;
       state.isAuthenticated = true;
+      // Persist to localStorage
+      localStorage.setItem("doctor", JSON.stringify(doctor));
+      localStorage.setItem("doctorToken", token);
     },
 
     updateDoctor: (state, action) => {
       state.doctorInfo = { ...state.doctorInfo, ...action.payload };
+      localStorage.setItem("doctor", JSON.stringify(state.doctorInfo));
     },
 
     clearDoctor: (state) => {
       state.doctorInfo = null;
       state.token = null;
       state.isAuthenticated = false;
+      localStorage.removeItem("doctor");
+      localStorage.removeItem("doctorToken");
     },
   },
 });

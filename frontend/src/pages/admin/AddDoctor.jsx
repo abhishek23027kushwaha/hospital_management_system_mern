@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { UserPlus, Upload, CheckCircle, AlertCircle, Loader, Calendar, Clock, Plus, Trash2 } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../utils/axiosInstance';
 
-const API = 'http://localhost:8000/api';
+
 
 const specializations = [
   'General Physician', 'Cardiologist', 'Dermatologist', 'Neurologist',
@@ -76,11 +76,9 @@ export default function AddDoctor() {
       // Add slots as JSON string
       fd.append('slots', JSON.stringify(slots));
 
-      const token = localStorage.getItem('token');
-      const { data } = await axios.post(`${API}/admin/doctors`, fd, {
+      const { data } = await axios.post(`/admin/doctors`, fd, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
         },
       });
 

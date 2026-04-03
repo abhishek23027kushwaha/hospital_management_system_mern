@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CalendarRange, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../utils/axiosInstance';
 
-const API_BASE = 'http://localhost:8000/api/admin';
+
 
 const sc = {
   Completed: { bg: '#d1fae5', color: '#16a34a' },
@@ -18,7 +18,7 @@ export default function ServiceAppointments() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get(`${API_BASE}/appointments`, { withCredentials: true });
+      const { data } = await axios.get(`/admin/appointments`);
       if (data.success) {
         // Filter only service appointments
         const svcOnly = data.appointments.filter(a => a.type === 'service');
@@ -37,7 +37,7 @@ export default function ServiceAppointments() {
 
   const changeStatus = async (id, status) => {
     try {
-      const { data } = await axios.put(`${API_BASE}/appointments/service/${id}/status`, { status }, { withCredentials: true });
+      const { data } = await axios.put(`/admin/appointments/service/${id}/status`, { status });
       if (data.success) {
         fetchData();
       }
@@ -97,7 +97,7 @@ export default function ServiceAppointments() {
                   <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 600, color: '#111827' }}>{a.patient?.name || 'User'}</td>
                   <td style={{ padding: '12px 14px', fontSize: 13, color: '#374151' }}>{a.service?.name}</td>
                   <td style={{ padding: '12px 14px', fontSize: 13, color: '#374151' }}>{a.date}</td>
-                  <td style={{ padding: '12px 14px', fontSize: 13, color: '#374151' }}>{a.time}</td>
+                  <td style={{ padding: '12px 14px', fontSize: 13, color: '#374151' }}>{a.timeSlot}</td>
                   <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 600 }}>₹{a.fee}</td>
                   <td style={{ padding: '12px 14px' }}>
                     <span style={{ background: sColor.bg, color: sColor.color, borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 700 }}>{status}</span>

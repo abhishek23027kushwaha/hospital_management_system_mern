@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { User, Key, Hospital, LogOut, Menu, X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { clearUser, selectUser, selectIsAuth } from "../redux/user.slice.js";
+import { selectDoctor, selectIsDoctorAuth, clearDoctor } from "../redux/doctor.slice.js";
 
 const navItems = [
   { name: "Home", path: "/" },
@@ -18,6 +19,12 @@ const Navbar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
+  const doctor = useSelector(selectDoctor);
+  const isUserAuth = useSelector(selectIsAuth);
+  const isDoctorAuth = useSelector(selectIsDoctorAuth);
+
+  const currentUser = doctor || user;
+  const isAuthenticated = isDoctorAuth || isUserAuth;
   const [activePath, setActivePath] = useState(location.pathname);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -40,12 +47,13 @@ const Navbar = () => {
 
   const handleLogout = () => {
     dispatch(clearUser());
+    dispatch(clearDoctor());
     setDropdownOpen(false);
     setMobileOpen(false);
     navigate("/login");
   };
 
-  const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "";
+  const firstLetter = currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : "";
 
   return (
     <>
@@ -99,7 +107,7 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             {/* Desktop right buttons */}
             <div className="hidden md:flex items-center gap-3">
-              {user ? (
+              {isAuthenticated ? (
                 <div className="relative" ref={dropdownRef}>
                   <motion.button
                     whileHover={{ scale: 1.08 }}
@@ -120,10 +128,10 @@ const Navbar = () => {
                         className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
                       >
                         <div className="px-4 py-2 border-b border-gray-100">
-                          <p className="text-sm font-bold text-gray-800 truncate">{user.name}</p>
-                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                          <p className="text-sm font-bold text-gray-800 truncate">{currentUser.name}</p>
+                          <p className="text-xs text-gray-400 truncate">{currentUser.email}</p>
                         </div>
-                        {user?.role === 'doctor' && (
+                        {currentUser?.role === 'doctor' && (
                           <Link
                             to="/doctor-admin"
                             onClick={() => setDropdownOpen(false)}
@@ -166,7 +174,7 @@ const Navbar = () => {
 
             {/* Mobile: avatar or hamburger */}
             <div className="flex items-center gap-2 md:hidden">
-              {user && (
+              {isAuthenticated && (
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen((v) => !v)}
@@ -184,8 +192,8 @@ const Navbar = () => {
                         className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
                       >
                         <div className="px-3 py-2 border-b border-gray-100">
-                          <p className="text-sm font-bold text-gray-800 truncate">{user.name}</p>
-                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                          <p className="text-sm font-bold text-gray-800 truncate">{currentUser.name}</p>
+                          <p className="text-xs text-gray-400 truncate">{currentUser.email}</p>
                         </div>
                         <button
                           onClick={handleLogout}
@@ -238,7 +246,7 @@ const Navbar = () => {
                 })}
 
                 {/* Mobile auth buttons (shown only when logged out) */}
-                {!user && (
+                {!isAuthenticated && (
                   <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-gray-100">
                     <Link
                       to="/doctor/login"
