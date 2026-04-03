@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = 'https://hospital-management-system-mern-9r6v.onrender.com/api';
 
 // Central axios instance - automatically attaches the correct token
 const axiosInstance = axios.create({
